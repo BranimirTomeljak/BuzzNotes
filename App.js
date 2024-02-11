@@ -1,20 +1,27 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+// App.js
+import { StatusBar } from "expo-status-bar";
+import { StyleSheet, Text, View } from "react-native";
+
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import HiveScreen from "./screens/HiveScreen";
+import RecordingsScreen from "./screens/RecordingsScreen";
+import MainMenuScreen from "./screens/MainMenu"; // import the new screen
+import ByColorScreen from "./screens/ByColorScreen";
+
+const Stack = createStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="MainMenu">
+        <Stack.Screen name="MainMenu" component={MainMenuScreen} />
+        <Stack.Screen name="BuzzNotes" component={HiveScreen} />
+        <Stack.Screen name="Snimke" component={RecordingsScreen} />
+        {/* Add the new screen to your stack navigator */}
+        <Stack.Screen name="ByColorScreen" component={ByColorScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
