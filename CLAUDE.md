@@ -30,7 +30,8 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - `src/models/` - TypeScript interfaces and enums
 - `src/theme/` - Design system (colors, spacing, typography, shadows)
 - `src/i18n/` - Internationalization files (hr, en)
-- `src/utils/` - Utility functions (sorting, formatting)
+- `src/hooks/` - Custom hooks (useDetailTabBar)
+- `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
 - `src/screens/` - Screens not currently routed (auth.tsx parked here)
 
 ## Conventions
@@ -76,6 +77,15 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - `muted` prop: grey play button, grey slider, lighter time text (used on solved cards)
 - Slider uses `pageX` + `measureInWindow` for reliable drag (not `locationX`)
 - Slider accepts optional `tintColor` prop to override fill/thumb color
+
+## Shared Components & Hooks
+
+Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
+
+- **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers.
+- **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
+- **`useDetailTabBar`** (`src/hooks/`) — Shared TabBar config (underline style, primary indicator) for detail screens. Returns `{ renderTabBar }`.
+- **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
 
 ## Architecture: Offline-First with Local User ID
 
