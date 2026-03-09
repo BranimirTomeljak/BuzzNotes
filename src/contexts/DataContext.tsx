@@ -17,6 +17,7 @@ import {
   saveLocalRecordings,
 } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
+import { deletePhotos } from '../services/photoStorage';
 import { getCurrentDateString } from '../utils/formatting';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
@@ -145,6 +146,8 @@ interface DataContextType {
     localPath: string;
     duration: number;
     priority: Priority;
+    notes?: string;
+    photos?: string[];
   }) => Promise<Recording>;
   updateRecording: (id: string, data: Partial<Recording>) => Promise<void>;
   deleteRecording: (id: string) => Promise<void>;
@@ -157,6 +160,7 @@ interface DataContextType {
   getRecordingsForLocation: (locationId: string) => Recording[];
   getLocationById: (id: string) => Location | undefined;
   getBeehiveById: (id: string) => Beehive | undefined;
+  getRecordingById: (id: string) => Recording | undefined;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -252,6 +256,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       localPath: string;
       duration: number;
       priority: Priority;
+      notes?: string;
+      photos?: string[];
     }): Promise<Recording> => {
       const now = Date.now();
       const recording: Recording = {
@@ -266,6 +272,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         priority: params.priority,
         solved: false,
         lastListenedAt: null,
+        notes: params.notes || '',
+        photos: params.photos || [],
         createdAt: now,
         updatedAt: now,
       };
@@ -280,6 +288,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteRecording = useCallback(async (id: string) => {
+    deletePhotos(id);
     dispatch({ type: 'DELETE_RECORDING', id });
   }, []);
 
@@ -399,6 +408,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     [state.beehives]
   );
 
+  const getRecordingById = useCallback(
+    (id: string) => state.recordings.find((r) => r.id === id),
+    [state.recordings]
+  );
+
   const value = useMemo(
     () => ({
       ...state,
@@ -419,6 +433,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       getRecordingsForLocation,
       getLocationById,
       getBeehiveById,
+      getRecordingById,
     }),
     [
       state,
@@ -439,6 +454,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       getRecordingsForLocation,
       getLocationById,
       getBeehiveById,
+      getRecordingById,
     ]
   );
 

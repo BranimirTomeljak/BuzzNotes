@@ -83,6 +83,7 @@ function LocationsScene() {
 }
 
 function RecentScene() {
+  const router = useRouter();
   const { recordings, getBeehiveById, getLocationById } = useData();
 
   const getBeehiveName = useCallback(
@@ -92,6 +93,10 @@ function RecentScene() {
   const getLocationName = useCallback(
     (locationId: string) => getLocationById(locationId)?.name,
     [getLocationById]
+  );
+  const handlePress = useCallback(
+    (id: string) => router.push(`/recording/${id}`),
+    [router]
   );
 
   return (
@@ -101,11 +106,13 @@ function RecentScene() {
       emptyIcon={<Ionicons name="time-outline" size={40} color={colors.textLight} />}
       getBeehiveName={getBeehiveName}
       getLocationName={getLocationName}
+      onPressRecording={handlePress}
     />
   );
 }
 
 function PriorityScene() {
+  const router = useRouter();
   const { recordings, getBeehiveById, getLocationById } = useData();
 
   const getBeehiveName = useCallback(
@@ -116,6 +123,10 @@ function PriorityScene() {
     (locationId: string) => getLocationById(locationId)?.name,
     [getLocationById]
   );
+  const handlePress = useCallback(
+    (id: string) => router.push(`/recording/${id}`),
+    [router]
+  );
 
   return (
     <RecordingListScene
@@ -124,6 +135,7 @@ function PriorityScene() {
       emptyIcon={<Ionicons name="flag-outline" size={40} color={colors.textLight} />}
       getBeehiveName={getBeehiveName}
       getLocationName={getLocationName}
+      onPressRecording={handlePress}
     />
   );
 }

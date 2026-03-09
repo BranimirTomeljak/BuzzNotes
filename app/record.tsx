@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Image,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,7 +14,9 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
+import * as ImagePicker from 'expo-image-picker';
 import { useData } from '../src/contexts/DataContext';
+import { savePhoto } from '../src/services/photoStorage';
 import PriorityPicker from '../src/components/PriorityPicker';
 import { colors, spacing, borderRadius, typography } from '../src/theme';
 import { Priority, Location, Beehive } from '../src/models/types';
@@ -49,13 +53,15 @@ export default function RecordScreen() {
   const [recordedDuration, setRecordedDuration] = useState(0);
   const [selectedPriority, setSelectedPriority] = useState<Priority | null>(null);
   const [saving, setSaving] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [photoUris, setPhotoUris] = useState<string[]>([]);
 
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current);
-      if (recorder.isRecording) recorder.stop();
+      try { if (recorder.isRecording) recorder.stop(); } catch { /* already released */ }
     };
   }, [recorder]);
 
@@ -105,6 +111,31 @@ export default function RecordScreen() {
     }
   }, [recorder, t]);
 
+  const handleTakePhoto = useCallback(async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUris(prev => [...prev, result.assets[0].uri]);
+    }
+  }, []);
+
+  const handlePickPhoto = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      allowsMultipleSelection: true,
+    });
+    if (!result.canceled) {
+      setPhotoUris(prev => [...prev, ...result.assets.map(a => a.uri)]);
+    }
+  }, []);
+
+  const handleRemovePhoto = useCallback((index: number) => {
+    setPhotoUris(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!selectedBeehiveId || !selectedLocationId || !recordingUri || !selectedPriority) return;
 
@@ -113,12 +144,21 @@ export default function RecordScreen() {
       const tempId = `rec_${Date.now()}`;
       const localPath = await saveRecordingLocally(recordingUri, tempId);
 
+      // Save photos to permanent storage
+      const savedPhotoPaths: string[] = [];
+      for (let i = 0; i < photoUris.length; i++) {
+        const path = savePhoto(photoUris[i], tempId, i);
+        savedPhotoPaths.push(path);
+      }
+
       await addRecording({
         beehiveId: selectedBeehiveId,
         locationId: selectedLocationId,
         localPath,
         duration: recordedDuration,
         priority: selectedPriority,
+        notes: notes.trim(),
+        photos: savedPhotoPaths,
       });
 
       Toast.show({ type: 'success', text1: t('recordings.saved'), visibilityTime: 1500 });
@@ -134,6 +174,8 @@ export default function RecordScreen() {
     recordingUri,
     selectedPriority,
     recordedDuration,
+    notes,
+    photoUris,
     addRecording,
     router,
     t,
@@ -270,6 +312,48 @@ export default function RecordScreen() {
               {t('recordings.duration')}: {formatDuration(recordedDuration)}
             </Text>
             <PriorityPicker selected={selectedPriority} onSelect={setSelectedPriority} />
+
+            {/* Notes */}
+            <TextInput
+              style={styles.notesInput}
+              placeholder={t('recordings.notesPlaceholder')}
+              placeholderTextColor={colors.textLight}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+
+            {/* Photos */}
+            <View style={styles.photoSection}>
+              <View style={styles.photoButtons}>
+                <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+                  <Ionicons name="camera-outline" size={20} color={colors.primary} />
+                  <Text style={styles.photoButtonText}>{t('recordings.takePhoto')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
+                  <Ionicons name="image-outline" size={20} color={colors.primary} />
+                  <Text style={styles.photoButtonText}>{t('recordings.chooseFromGallery')}</Text>
+                </TouchableOpacity>
+              </View>
+              {photoUris.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoPreviewRow}>
+                  {photoUris.map((uri, index) => (
+                    <View key={uri + index} style={styles.photoPreviewContainer}>
+                      <Image source={{ uri }} style={styles.photoPreview} />
+                      <TouchableOpacity
+                        style={styles.photoRemoveBtn}
+                        onPress={() => handleRemovePhoto(index)}
+                      >
+                        <Ionicons name="close-circle" size={22} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
             {selectedPriority && (
               <TouchableOpacity
                 style={[styles.saveButton, saving && styles.saveButtonDisabled]}
@@ -424,5 +508,55 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.white,
     fontSize: 20,
+  },
+  notesInput: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    fontSize: 16,
+    color: colors.text,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  photoSection: {
+    gap: spacing.md,
+  },
+  photoButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  photoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+  },
+  photoButtonText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  photoPreviewRow: {
+    flexDirection: 'row',
+  },
+  photoPreviewContainer: {
+    marginRight: spacing.sm,
+    position: 'relative',
+  },
+  photoPreview: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.sm,
+  },
+  photoRemoveBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: colors.white,
+    borderRadius: 11,
   },
 });

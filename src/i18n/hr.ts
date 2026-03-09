@@ -79,6 +79,15 @@ export default {
     unsolved: 'Neriješeno',
     unresolve: 'Vrati',
     micPermission: 'Potrebna dozvola za mikrofon',
+    notes: 'Bilješke',
+    notesPlaceholder: 'Dodaj bilješke o pregledu...',
+    addPhoto: 'Dodaj fotografiju',
+    takePhoto: 'Slikaj',
+    chooseFromGallery: 'Odaberi iz galerije',
+    photos: 'Fotografije',
+    removePhoto: 'Ukloni fotografiju',
+    editNotes: 'Uredi bilješke',
+    noNotes: 'Nema bilješki',
   },
 
   // Priority

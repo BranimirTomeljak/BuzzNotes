@@ -2,13 +2,19 @@ import { Paths, File, Directory } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { Location, Beehive, Recording } from '../models/types';
+import { ensurePhotosDir } from './photoStorage';
+
+interface ExportRecording extends Recording {
+  audioBase64?: string;
+  photosBase64?: string[];
+}
 
 interface ExportData {
   version: 1;
   exportedAt: number;
   locations: Location[];
   beehives: Beehive[];
-  recordings: (Recording & { audioBase64?: string })[];
+  recordings: ExportRecording[];
 }
 
 function getRecordingsDir(): Directory {
@@ -20,21 +26,40 @@ export async function exportData(
   beehives: Beehive[],
   recordings: Recording[]
 ): Promise<void> {
-  // Read audio files as base64
+  // Read audio files and photos as base64
   const recordingsWithAudio = await Promise.all(
     recordings.map(async (rec) => {
       let audioBase64: string | undefined;
-      if (Platform.OS !== 'web' && rec.localPath) {
-        try {
-          const file = new File(rec.localPath);
-          if (file.exists) {
-            audioBase64 = await file.base64();
+      let photosBase64: string[] | undefined;
+
+      if (Platform.OS !== 'web') {
+        if (rec.localPath) {
+          try {
+            const file = new File(rec.localPath);
+            if (file.exists) {
+              audioBase64 = await file.base64();
+            }
+          } catch {
+            // Skip audio if file can't be read
           }
-        } catch {
-          // Skip audio if file can't be read
+        }
+
+        if (rec.photos?.length) {
+          photosBase64 = [];
+          for (const photoPath of rec.photos) {
+            try {
+              const file = new File(photoPath);
+              if (file.exists) {
+                photosBase64.push(await file.base64());
+              }
+            } catch {
+              // Skip photo if file can't be read
+            }
+          }
         }
       }
-      return { ...rec, audioBase64 };
+
+      return { ...rec, audioBase64, photosBase64 };
     })
   );
 
@@ -82,7 +107,7 @@ export async function importData(): Promise<{
     throw new Error('Unsupported export format version');
   }
 
-  // Restore audio files
+  // Restore audio files and photos
   let recordingsDir: Directory | null = null;
   if (Platform.OS !== 'web') {
     recordingsDir = getRecordingsDir();
@@ -90,22 +115,38 @@ export async function importData(): Promise<{
       recordingsDir.create();
     }
 
+    const photosDir = ensurePhotosDir();
+
     for (const rec of data.recordings) {
       if (rec.audioBase64) {
         const destFile = new File(recordingsDir, `${rec.id}.m4a`);
         destFile.write(rec.audioBase64, { encoding: 'base64' });
       }
+      if (rec.photosBase64?.length) {
+        for (let i = 0; i < rec.photosBase64.length; i++) {
+          const destFile = new File(photosDir, `${rec.id}_${i}.jpg`);
+          destFile.write(rec.photosBase64[i], { encoding: 'base64' });
+        }
+      }
     }
   }
 
-  // Strip audioBase64 and update localPath to new device path
+  // Strip base64 data and update paths to new device location
   const cleanRecordings: Recording[] = data.recordings.map(
-    ({ audioBase64, ...rec }) => {
+    ({ audioBase64, photosBase64, ...rec }) => {
+      const result = { ...rec };
       if (audioBase64 && recordingsDir) {
         const destFile = new File(recordingsDir, `${rec.id}.m4a`);
-        return { ...rec, localPath: destFile.uri };
+        result.localPath = destFile.uri;
       }
-      return rec;
+      if (photosBase64?.length) {
+        const photosDir = ensurePhotosDir();
+        result.photos = photosBase64.map((_, i) => {
+          const destFile = new File(photosDir, `${rec.id}_${i}.jpg`);
+          return destFile.uri;
+        });
+      }
+      return result;
     }
   );
 

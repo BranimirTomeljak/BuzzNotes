@@ -79,6 +79,15 @@ export default {
     unsolved: 'Unsolved',
     unresolve: 'Unresolve',
     micPermission: 'Microphone permission required',
+    notes: 'Notes',
+    notesPlaceholder: 'Add inspection notes...',
+    addPhoto: 'Add photo',
+    takePhoto: 'Take photo',
+    chooseFromGallery: 'Choose from gallery',
+    photos: 'Photos',
+    removePhoto: 'Remove photo',
+    editNotes: 'Edit notes',
+    noNotes: 'No notes',
   },
 
   // Priority

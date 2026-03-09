@@ -10,6 +10,7 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - **Navigation**: Expo Router v6 (file-based routing in `app/` directory)
 - **Backend**: Offline-first (AsyncStorage). Firebase code kept for future cloud sync.
 - **Audio**: expo-audio (migrated from deprecated expo-av)
+- **Photos**: expo-image-picker (camera + gallery), file-based storage in `photos/` directory
 - **Icons**: @expo/vector-icons (Ionicons + MaterialCommunityIcons) — no emojis in UI
 - **State**: React Context + useReducer
 - **i18n**: i18next (Croatian default, English)
@@ -52,10 +53,10 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 **Skip a build:** Include `[skip eas]` in the commit message.
 
 ## Project Structure
-- `app/` - Expo Router screens (tabs, location/[id], beehive/[id], record, settings)
+- `app/` - Expo Router screens (tabs, location/[id], beehive/[id], recording/[id], record, settings)
 - `src/components/` - Reusable UI components
 - `src/contexts/` - React Contexts (Data). AuthContext kept for future use.
-- `src/services/` - Audio, sync, storage, export/import services
+- `src/services/` - Audio, sync, storage, export/import, photo storage services
 - `src/models/` - TypeScript interfaces and enums
 - `src/theme/` - Design system (colors, spacing, typography, shadows)
 - `src/i18n/` - Internationalization files (hr, en)
@@ -93,12 +94,25 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 
 ### Voice Note Cards
 - **Unsolved**: full card with priority-based background tint (HIGH: #FFECEC, MEDIUM: #FFF8E0, LOW: #ECF2FF)
+  - Shows notes preview (2-line truncated) if recording has notes
+  - Shows photo thumbnail row (up to 4 + "+N" badge) if recording has photos
+  - Tapping card navigates to recording detail screen (`/recording/[id]`)
 - **Solved**: compact card, surface background, greyed-out audio player (muted prop)
 - **Checkbox toggle**: top-right of both card types, same position
   - Unsolved: `checkmark-circle-outline` (light grey) — tap to mark solved
   - Solved: `checkmark-circle` (green) — tap to unresolve
 - Solved items sorted to bottom of lists, separated by a "SOLVED" divider line
 - `showSolvedDivider` prop on RecordingCard controls the divider (set on first solved item in list)
+
+### Recording Detail Screen (`app/recording/[id].tsx`)
+- Full view of a recording with editable notes and photo gallery
+- Meta info card (beehive, location, duration)
+- Priority badge (tap to cycle) + solved toggle chip
+- Audio player with priority tint (or muted if solved)
+- Notes section with inline edit (pencil icon toggles edit mode)
+- Photo grid (2 columns) with camera/gallery add buttons and remove buttons
+- Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList) and "1 / N" counter
+- Deleting a recording also deletes its photos from disk (`deletePhotos`)
 
 ### Audio Player
 - Play/pause button (44x44 circle), slider with draggable thumb (16px), time display
@@ -111,7 +125,8 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 
 Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
 
-- **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers.
+- **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
+- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Photos stored as `photos/{recordingId}_{index}.jpg`.
 - **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
 - **`useDetailTabBar`** (`src/hooks/`) — Shared TabBar config (underline style, primary indicator) for detail screens. Returns `{ renderTabBar }`.
 - **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
@@ -121,9 +136,10 @@ Recording list scenes, editable name rows, tab bar config, and delete confirmati
 The app runs fully offline with no Firebase dependency at runtime. A local UUID is generated on first launch and stored in AsyncStorage as `@buzznotes/userId`. This ID is written to the `userId` field on all locations, beehives, and recordings.
 
 ### Export/Import
-- Export creates a `.buzznotes.json` file with all data + audio files encoded as base64
+- Export creates a `.buzznotes.json` file with all data + audio files + photos encoded as base64
 - Uses `expo-sharing` to share via email, Drive, Bluetooth, etc.
 - Import uses `File.pickFileAsync()` from expo-file-system to select a file
+- Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths
 - Merge strategy: imported items with same ID update existing (by updatedAt); new items are added
 
 ### Files Kept for Future Firebase Integration
@@ -135,6 +151,9 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 
 ### Why auth.tsx is in src/screens/ (not app/)
 Expo Router auto-discovers and evaluates all files in `app/`. The `auth.tsx` screen imports `AuthContext.tsx` which statically imports `firebaseConfig.ts`, which calls `initializeApp()` and `getAuth()` at module load time. This caused a Firebase Auth warning at startup even though auth isn't used yet. Moving it to `src/screens/` prevents this. Move it back to `app/auth.tsx` when re-enabling Firebase.
+
+### Recording Model
+The `Recording` type includes optional `notes?: string` and `photos?: string[]` fields for text notes and photo file paths. Photos are added during recording (priority step) or later in the recording detail screen. Notes are entered during recording or edited in the detail screen.
 
 ## Firebase Collections (future)
 - `locations` - Apiary locations
@@ -178,5 +197,5 @@ Expo Router auto-discovers and evaluates all files in `app/`. The `auth.tsx` scr
 - **Slider drag**: Must use `pageX` (absolute coordinates) with `measureInWindow`, not `locationX` (relative to element). Store callbacks in refs to avoid stale PanResponder closures.
 - **Expo Router auto-evaluation**: All files in `app/` are discovered and evaluated as routes, even if not rendered. Keep files with heavy imports (Firebase) out of `app/` until needed.
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
-- **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount.
+- **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.

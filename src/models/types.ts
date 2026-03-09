@@ -33,6 +33,8 @@ export interface Recording {
   priority: Priority;
   solved: boolean;
   lastListenedAt: number | null;
+  notes?: string;
+  photos?: string[];
   createdAt: number;
   updatedAt: number;
 }

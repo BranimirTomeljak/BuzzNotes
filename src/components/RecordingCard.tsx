@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Recording, Priority } from '../models/types';
 import { colors, spacing, borderRadius, typography, shadows } from '../theme';
@@ -17,6 +17,7 @@ interface RecordingCardProps {
   onToggleSolved: () => void;
   onDelete: () => void;
   onPlay: () => void;
+  onPress?: () => void;
   showSolvedDivider?: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function RecordingCard({
   onToggleSolved,
   onDelete,
   onPlay,
+  onPress,
   showSolvedDivider,
 }: RecordingCardProps) {
   const { t } = useTranslation();
@@ -105,7 +107,10 @@ export default function RecordingCard({
       ? colors.priorityMediumTint
       : colors.priorityLowTint;
 
-  return (
+  const hasNotes = !!recording.notes?.trim();
+  const hasPhotos = !!recording.photos?.length;
+
+  const cardContent = (
     <View style={[styles.card, { backgroundColor: priorityTint }]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -143,6 +148,30 @@ export default function RecordingCard({
         <Text style={styles.noAudio}>{formatDuration(recording.duration)}</Text>
       )}
 
+      {/* Notes preview */}
+      {hasNotes && (
+        <View style={styles.notesPreview}>
+          <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+          <Text style={styles.notesPreviewText} numberOfLines={2}>
+            {recording.notes}
+          </Text>
+        </View>
+      )}
+
+      {/* Photo thumbnails */}
+      {hasPhotos && (
+        <View style={styles.photoRow}>
+          {recording.photos!.slice(0, 4).map((uri, i) => (
+            <Image key={i} source={{ uri }} style={styles.photoThumb} />
+          ))}
+          {recording.photos!.length > 4 && (
+            <View style={styles.photoMore}>
+              <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={styles.footer}>
         <View style={styles.footerInfo}>
           {recording.lastListenedAt && (
@@ -161,6 +190,16 @@ export default function RecordingCard({
       </View>
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+        {cardContent}
+      </TouchableOpacity>
+    );
+  }
+
+  return cardContent;
 }
 
 const styles = StyleSheet.create({
@@ -227,6 +266,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.dangerBg,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  notesPreview: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+  },
+  notesPreviewText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  photoThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.sm,
+  },
+  photoMore: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoMoreText: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
 
   // --- Solved divider ---

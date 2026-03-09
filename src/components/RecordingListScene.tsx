@@ -13,6 +13,7 @@ interface RecordingListSceneProps {
   emptyIcon: React.ReactNode;
   getBeehiveName?: (beehiveId: string) => string | undefined;
   getLocationName?: (locationId: string) => string | undefined;
+  onPressRecording?: (id: string) => void;
 }
 
 export default function RecordingListScene({
@@ -21,6 +22,7 @@ export default function RecordingListScene({
   emptyIcon,
   getBeehiveName,
   getLocationName,
+  onPressRecording,
 }: RecordingListSceneProps) {
   const { t } = useTranslation();
   const { updateRecording, deleteRecording } = useData();
@@ -43,9 +45,10 @@ export default function RecordingListScene({
         onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
         onDelete={() => deleteRecording(item.id)}
         onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
+        onPress={onPressRecording ? () => onPressRecording(item.id) : undefined}
       />
     ),
-    [getBeehiveName, getLocationName, firstSolvedId, updateRecording, deleteRecording]
+    [getBeehiveName, getLocationName, firstSolvedId, updateRecording, deleteRecording, onPressRecording]
   );
 
   return (

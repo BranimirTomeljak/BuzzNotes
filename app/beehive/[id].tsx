@@ -22,27 +22,39 @@ import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
 type Route = { key: string; title: string };
 
 function RecentScene({ beehiveId }: { beehiveId: string }) {
+  const router = useRouter();
   const { getRecordingsForBeehive } = useData();
   const recordings = getRecordingsForBeehive(beehiveId);
+  const handlePress = useCallback(
+    (id: string) => router.push(`/recording/${id}`),
+    [router]
+  );
 
   return (
     <RecordingListScene
       recordings={recordings}
       sortFn={sortByRecent}
       emptyIcon={<Ionicons name="mic-outline" size={40} color={colors.textLight} />}
+      onPressRecording={handlePress}
     />
   );
 }
 
 function PriorityScene({ beehiveId }: { beehiveId: string }) {
+  const router = useRouter();
   const { getRecordingsForBeehive } = useData();
   const recordings = getRecordingsForBeehive(beehiveId);
+  const handlePress = useCallback(
+    (id: string) => router.push(`/recording/${id}`),
+    [router]
+  );
 
   return (
     <RecordingListScene
       recordings={recordings}
       sortFn={sortByPriority}
       emptyIcon={<Ionicons name="mic-outline" size={40} color={colors.textLight} />}
+      onPressRecording={handlePress}
     />
   );
 }

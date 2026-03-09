@@ -44,6 +44,7 @@ function RootLayout() {
               />
               <Stack.Screen name="location/[id]" options={{ title: '' }} />
               <Stack.Screen name="beehive/[id]" options={{ title: '' }} />
+              <Stack.Screen name="recording/[id]" options={{ title: '' }} />
             </Stack>
           </DataProvider>
           <Toast visibilityTime={1500} />
