@@ -19,7 +19,7 @@ import RecordingCard from '../../src/components/RecordingCard';
 import EmptyState from '../../src/components/EmptyState';
 import FloatingActions from '../../src/components/FloatingActions';
 import { colors, spacing } from '../../src/theme';
-import { naturalSort, sortByRecent, sortByPriority } from '../../src/utils/sorting';
+import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
 import { Location, Recording, Priority } from '../../src/models/types';
 
 type Route = { key: string; title: string; icon: React.ComponentProps<typeof Ionicons>['name'] };
@@ -30,7 +30,7 @@ function LocationsScene() {
   const { locations, beehives, recordings, syncing, refreshData } = useData();
 
   const sortedLocations = useMemo(
-    () => [...locations].sort((a, b) => naturalSort(a.name, b.name)),
+    () => [...locations].sort((a, b) => a.createdAt - b.createdAt),
     [locations]
   );
 
