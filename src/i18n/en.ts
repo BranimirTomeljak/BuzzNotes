@@ -99,6 +99,16 @@ export default {
     title: 'Priority',
   },
 
+  // Onboarding
+  onboarding: {
+    welcome: 'Welcome to BuzzNotes',
+    subtitle: 'Your beekeeper voice notes companion',
+    feature1: 'Organize apiaries by location',
+    feature2: 'Track each beehive',
+    feature3: 'Record voice notes with priority',
+    getStarted: 'Get Started',
+  },
+
   // Common
   common: {
     save: 'Save',

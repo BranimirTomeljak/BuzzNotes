@@ -11,6 +11,7 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - **Backend**: Offline-first (AsyncStorage). Firebase code kept for future cloud sync.
 - **Audio**: expo-audio (migrated from deprecated expo-av)
 - **Photos**: expo-image-picker (camera + gallery), file-based storage in `photos/` directory
+- **Haptics**: expo-haptics (no-op on web)
 - **Icons**: @expo/vector-icons (Ionicons + MaterialCommunityIcons) — no emojis in UI
 - **State**: React Context + useReducer
 - **i18n**: i18next (Croatian default, English)
@@ -94,7 +95,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/hooks/` - Custom hooks (useDetailTabBar)
 - `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
 - `src/__tests__/` - Jest unit tests
-- `src/screens/` - Screens not currently routed (auth.tsx parked here)
+- `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
 
 ## Conventions
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
@@ -231,3 +232,17 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
 - **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
+
+## UX Polish
+
+### Haptic Feedback
+- `src/utils/haptics.ts` provides `hapticLight`, `hapticMedium`, `hapticSuccess`, `hapticWarning`
+- All functions are no-op on web (Platform.OS check)
+- Used on: record start/stop (medium), save (success), delete confirmations (warning), priority cycle (light), solved toggle (success)
+
+### Onboarding
+- First-launch welcome screen shown before main app
+- AsyncStorage key `@buzznotes/onboardingDone` tracks completion
+- `src/screens/OnboardingScreen.tsx` — rendered conditionally in `_layout.tsx` (not a route)
+- Features: bee icon, 3 feature highlights (locations, beehives, recordings), "Get Started" button
+- i18n: both Croatian and English strings in `onboarding.*` namespace

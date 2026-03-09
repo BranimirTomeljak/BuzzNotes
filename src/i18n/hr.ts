@@ -99,6 +99,16 @@ export default {
     title: 'Prioritet',
   },
 
+  // Onboarding
+  onboarding: {
+    welcome: 'Dobrodošli u BuzzNotes',
+    subtitle: 'Vaš pčelarski dnevnik glasovnih bilješki',
+    feature1: 'Organizirajte pčelinjake po lokaciji',
+    feature2: 'Pratite svaku košnicu',
+    feature3: 'Snimajte glasovne bilješke s prioritetom',
+    getStarted: 'Započni',
+  },
+
   // Common
   common: {
     save: 'Spremi',
