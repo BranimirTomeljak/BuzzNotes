@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -41,10 +41,22 @@ export default function RecordingDetail() {
   const beehive = recording ? getBeehiveById(recording.beehiveId) : undefined;
   const location = recording ? getLocationById(recording.locationId) : undefined;
 
-  const [editingNotes, setEditingNotes] = useState(false);
   const [notesText, setNotesText] = useState(recording?.notes || '');
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const photoListRef = useRef<FlatList>(null);
+  const notesRef = useRef(notesText);
+  notesRef.current = notesText;
+
+  const savedNotesRef = useRef(recording?.notes || '');
+
+  useEffect(() => {
+    return () => {
+      const trimmed = notesRef.current.trim();
+      if (trimmed !== savedNotesRef.current) {
+        updateRecording(id, { notes: trimmed });
+      }
+    };
+  }, [id, updateRecording]);
 
   const audioUri = recording?.localPath || recording?.audioUrl;
 
@@ -76,9 +88,12 @@ export default function RecordingDetail() {
     );
   }, [id, deleteRecording, router, t]);
 
-  const handleSaveNotes = useCallback(() => {
-    updateRecording(id, { notes: notesText.trim() });
-    setEditingNotes(false);
+  const handleNotesBlur = useCallback(() => {
+    const trimmed = notesText.trim();
+    if (trimmed !== savedNotesRef.current) {
+      updateRecording(id, { notes: trimmed });
+      savedNotesRef.current = trimmed;
+    }
   }, [id, notesText, updateRecording]);
 
   const handleTakePhoto = useCallback(async () => {
@@ -208,41 +223,17 @@ export default function RecordingDetail() {
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={18} color={colors.text} />
             <Text style={styles.sectionTitle}>{t('recordings.notes')}</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (editingNotes) {
-                  handleSaveNotes();
-                } else {
-                  setNotesText(recording.notes || '');
-                  setEditingNotes(true);
-                }
-              }}
-              style={styles.editBtn}
-            >
-              <Ionicons
-                name={editingNotes ? 'checkmark' : 'create-outline'}
-                size={20}
-                color={colors.primary}
-              />
-            </TouchableOpacity>
           </View>
-          {editingNotes ? (
-            <TextInput
-              style={styles.notesInput}
-              value={notesText}
-              onChangeText={setNotesText}
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-              placeholder={t('recordings.notesPlaceholder')}
-              placeholderTextColor={colors.textLight}
-              autoFocus
-            />
-          ) : recording.notes?.trim() ? (
-            <Text style={styles.notesText}>{recording.notes}</Text>
-          ) : (
-            <Text style={styles.notesEmpty}>{t('recordings.noNotes')}</Text>
-          )}
+          <TextInput
+            style={styles.notesInput}
+            value={notesText}
+            onChangeText={setNotesText}
+            onBlur={handleNotesBlur}
+            multiline
+            textAlignVertical="top"
+            placeholder={t('recordings.notesPlaceholder')}
+            placeholderTextColor={colors.textLight}
+          />
         </View>
 
         {/* Photos section */}
@@ -424,9 +415,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     flex: 1,
   },
-  editBtn: {
-    padding: spacing.sm,
-  },
   notesInput: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -435,15 +423,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     minHeight: 120,
     textAlignVertical: 'top',
-  },
-  notesText: {
-    ...typography.body,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  notesEmpty: {
-    ...typography.bodySmall,
-    fontStyle: 'italic',
   },
   photoButtons: {
     flexDirection: 'row',
