@@ -16,7 +16,6 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import * as ImagePicker from 'expo-image-picker';
-import Toast from 'react-native-toast-message';
 import { useData } from '../../src/contexts/DataContext';
 import { savePhoto, deletePhoto } from '../../src/services/photoStorage';
 import AudioPlayer from '../../src/components/AudioPlayer';
@@ -34,13 +33,8 @@ export default function RecordingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const {
-    getRecordingById,
-    getBeehiveById,
-    getLocationById,
-    updateRecording,
-    deleteRecording,
-  } = useData();
+  const { getRecordingById, getBeehiveById, getLocationById, updateRecording, deleteRecording } =
+    useData();
 
   const recording = getRecordingById(id);
   const beehive = recording ? getBeehiveById(recording.beehiveId) : undefined;
@@ -105,9 +99,7 @@ export default function RecordingDetail() {
     });
     if (!result.canceled) {
       const photos = recording.photos || [];
-      const newPaths = result.assets.map((a, i) =>
-        savePhoto(a.uri, id, photos.length + i)
-      );
+      const newPaths = result.assets.map((a, i) => savePhoto(a.uri, id, photos.length + i));
       updateRecording(id, { photos: [...photos, ...newPaths] });
     }
   }, [recording, id, updateRecording]);
@@ -120,7 +112,7 @@ export default function RecordingDetail() {
       const updated = recording.photos.filter((_, i) => i !== index);
       updateRecording(id, { photos: updated });
     },
-    [recording, id, updateRecording]
+    [recording, id, updateRecording],
   );
 
   if (!recording) {
@@ -136,8 +128,8 @@ export default function RecordingDetail() {
     recording.priority === Priority.HIGH
       ? colors.priorityHighTint
       : recording.priority === Priority.MEDIUM
-      ? colors.priorityMediumTint
-      : colors.priorityLowTint;
+        ? colors.priorityMediumTint
+        : colors.priorityLowTint;
 
   const hasPhotos = !!recording.photos?.length;
 
@@ -189,7 +181,12 @@ export default function RecordingDetail() {
         </View>
 
         {/* Audio player */}
-        <View style={[styles.audioCard, { backgroundColor: recording.solved ? colors.surface : priorityTint }]}>
+        <View
+          style={[
+            styles.audioCard,
+            { backgroundColor: recording.solved ? colors.surface : priorityTint },
+          ]}
+        >
           {audioUri ? (
             <AudioPlayer
               uri={audioUri}
@@ -287,7 +284,10 @@ export default function RecordingDetail() {
       {/* Fullscreen photo viewer with swipe */}
       <Modal visible={viewingPhotoIndex !== null} transparent animationType="fade">
         <View style={styles.photoViewerOverlay}>
-          <TouchableOpacity style={styles.photoViewerClose} onPress={() => setViewingPhotoIndex(null)}>
+          <TouchableOpacity
+            style={styles.photoViewerClose}
+            onPress={() => setViewingPhotoIndex(null)}
+          >
             <Ionicons name="close" size={28} color={colors.white} />
           </TouchableOpacity>
           {viewingPhotoIndex !== null && recording.photos && (
@@ -310,7 +310,10 @@ export default function RecordingDetail() {
                 }}
                 keyExtractor={(item, i) => item + i}
                 renderItem={({ item }) => (
-                  <Pressable style={styles.photoViewerPage} onPress={() => setViewingPhotoIndex(null)}>
+                  <Pressable
+                    style={styles.photoViewerPage}
+                    onPress={() => setViewingPhotoIndex(null)}
+                  >
                     <Image
                       source={{ uri: item }}
                       style={styles.photoViewerImage}

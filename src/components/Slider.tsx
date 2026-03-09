@@ -1,10 +1,5 @@
 import React, { useCallback, useRef, useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  PanResponder,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, StyleSheet, PanResponder, LayoutChangeEvent } from 'react-native';
 import { colors, borderRadius } from '../theme';
 
 interface SliderProps {
@@ -42,7 +37,7 @@ export default function Slider({ value, maximumValue, onValueChange, tintColor }
           onValueChangeRef.current(getValueFromPageX(evt.nativeEvent.pageX));
         },
       }),
-    [getValueFromPageX]
+    [getValueFromPageX],
   );
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
@@ -56,15 +51,23 @@ export default function Slider({ value, maximumValue, onValueChange, tintColor }
   const progress = maximumValue > 0 ? (value / maximumValue) * 100 : 0;
 
   return (
-    <View
-      style={styles.container}
-      onLayout={onLayout}
-      {...panResponder.panHandlers}
-    >
+    <View style={styles.container} onLayout={onLayout} {...panResponder.panHandlers}>
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress}%` }, tintColor && { backgroundColor: tintColor }]} />
+        <View
+          style={[
+            styles.fill,
+            { width: `${progress}%` },
+            tintColor && { backgroundColor: tintColor },
+          ]}
+        />
       </View>
-      <View style={[styles.thumb, { left: `${progress}%` }, tintColor && { backgroundColor: tintColor }]} />
+      <View
+        style={[
+          styles.thumb,
+          { left: `${progress}%` },
+          tintColor && { backgroundColor: tintColor },
+        ]}
+      />
     </View>
   );
 }

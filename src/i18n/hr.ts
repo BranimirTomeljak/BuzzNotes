@@ -35,7 +35,8 @@ export default {
     empty: 'Nema lokacija',
     emptyDesc: 'Dodaj svoju prvu lokaciju pčelinjaka',
     delete: 'Obriši lokaciju',
-    deleteConfirm: 'Jesi li siguran/na da želiš obrisati ovu lokaciju i sve njene košnice i snimke?',
+    deleteConfirm:
+      'Jesi li siguran/na da želiš obrisati ovu lokaciju i sve njene košnice i snimke?',
     edit: 'Uredi lokaciju',
   },
 

@@ -20,6 +20,10 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - `npm start` / `npx expo start` - Start dev server
 - `npm run web` - Start for web
 - `npm run android` - Start for Android
+- `npm test` - Run Jest tests
+- `npm run lint` - Run ESLint
+- `npm run format` - Auto-format with Prettier
+- `npm run format:check` - Check formatting without writing
 - `npx tsc --noEmit` - TypeScript type check
 - `npx expo export --platform web` - Verify web build
 
@@ -52,6 +56,33 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 
 **Skip a build:** Include `[skip eas]` in the commit message.
 
+### CI (GitHub Actions)
+
+`.github/workflows/ci.yml` runs on every push to `master` and on PRs:
+1. TypeScript type check (`npx tsc --noEmit`)
+2. ESLint (`npm run lint`)
+3. Jest tests (`npm test`)
+
+### Testing
+
+- **Framework**: jest-expo preset
+- **Test files**: `src/__tests__/*.test.ts`
+- **Setup**: `jest.setup.js` mocks AsyncStorage
+- **Coverage**: formatting utils, sorting utils, data reducer
+- `dataReducer` is exported from `DataContext.tsx` for direct unit testing
+
+### Code Quality
+
+- **ESLint**: `eslint-config-expo` + `eslint-config-prettier` (`.eslintrc.js`)
+- **Prettier**: single quotes, trailing commas, 100 char width (`.prettierrc`)
+- Only `firebaseConfig.ts` has lint warnings (unused imports kept intentionally for future use)
+
+### Versioning
+
+- `app.json` `version` — semantic version string (e.g. `"1.0.0"`)
+- `app.json` `android.versionCode` — integer, increment on each release
+- `package.json` `version` — keep in sync with `app.json`
+
 ## Project Structure
 - `app/` - Expo Router screens (tabs, location/[id], beehive/[id], recording/[id], record, settings)
 - `src/components/` - Reusable UI components
@@ -62,6 +93,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/i18n/` - Internationalization files (hr, en)
 - `src/hooks/` - Custom hooks (useDetailTabBar)
 - `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
+- `src/__tests__/` - Jest unit tests
 - `src/screens/` - Screens not currently routed (auth.tsx parked here)
 
 ## Conventions

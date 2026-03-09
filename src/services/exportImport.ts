@@ -24,7 +24,7 @@ function getRecordingsDir(): Directory {
 export async function exportData(
   locations: Location[],
   beehives: Beehive[],
-  recordings: Recording[]
+  recordings: Recording[],
 ): Promise<void> {
   // Read audio files and photos as base64
   const recordingsWithAudio = await Promise.all(
@@ -60,7 +60,7 @@ export async function exportData(
       }
 
       return { ...rec, audioBase64, photosBase64 };
-    })
+    }),
   );
 
   const exportPayload: ExportData = {
@@ -147,7 +147,7 @@ export async function importData(): Promise<{
         });
       }
       return result;
-    }
+    },
   );
 
   return {

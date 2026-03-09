@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius } from '../theme';
+import { colors, spacing } from '../theme';
 import { formatDuration } from '../utils/formatting';
 import Slider from './Slider';
 
@@ -47,7 +47,7 @@ export default function AudioPlayer({ uri, duration, onPlay, muted }: AudioPlaye
     (value: number) => {
       player.seekTo(value);
     },
-    [player]
+    [player],
   );
 
   const currentSec = Math.floor(status.currentTime);
@@ -60,11 +60,7 @@ export default function AudioPlayer({ uri, duration, onPlay, muted }: AudioPlaye
         style={[styles.playButton, muted && styles.playButtonMuted]}
         activeOpacity={0.7}
       >
-        <Ionicons
-          name={status.playing ? 'pause' : 'play'}
-          size={20}
-          color={colors.white}
-        />
+        <Ionicons name={status.playing ? 'pause' : 'play'} size={20} color={colors.white} />
       </TouchableOpacity>
       <View style={styles.sliderContainer}>
         <Slider

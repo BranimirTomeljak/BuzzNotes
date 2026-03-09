@@ -61,7 +61,9 @@ type DataAction =
   | { type: 'UPDATE_RECORDING'; id: string; data: Partial<Recording> }
   | { type: 'DELETE_RECORDING'; id: string };
 
-function dataReducer(state: DataState, action: DataAction): DataState {
+export { DataState, DataAction };
+
+export function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, loading: action.loading };
@@ -80,9 +82,7 @@ function dataReducer(state: DataState, action: DataAction): DataState {
     case 'UPDATE_LOCATION':
       return {
         ...state,
-        locations: state.locations.map((l) =>
-          l.id === action.id ? { ...l, ...action.data } : l
-        ),
+        locations: state.locations.map((l) => (l.id === action.id ? { ...l, ...action.data } : l)),
       };
     case 'DELETE_LOCATION':
       return {
@@ -96,9 +96,7 @@ function dataReducer(state: DataState, action: DataAction): DataState {
     case 'UPDATE_BEEHIVE':
       return {
         ...state,
-        beehives: state.beehives.map((b) =>
-          b.id === action.id ? { ...b, ...action.data } : b
-        ),
+        beehives: state.beehives.map((b) => (b.id === action.id ? { ...b, ...action.data } : b)),
       };
     case 'DELETE_BEEHIVE':
       return {
@@ -112,7 +110,7 @@ function dataReducer(state: DataState, action: DataAction): DataState {
       return {
         ...state,
         recordings: state.recordings.map((r) =>
-          r.id === action.id ? { ...r, ...action.data } : r
+          r.id === action.id ? { ...r, ...action.data } : r,
         ),
       };
     case 'DELETE_RECORDING':
@@ -200,21 +198,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.locations, state.beehives, state.recordings, state.loading]);
 
-  const addLocation = useCallback(
-    async (name: string): Promise<Location> => {
-      const now = Date.now();
-      const location: Location = {
-        id: randomUUID(),
-        name,
-        userId: userIdRef.current,
-        createdAt: now,
-        updatedAt: now,
-      };
-      dispatch({ type: 'ADD_LOCATION', location });
-      return location;
-    },
-    []
-  );
+  const addLocation = useCallback(async (name: string): Promise<Location> => {
+    const now = Date.now();
+    const location: Location = {
+      id: randomUUID(),
+      name,
+      userId: userIdRef.current,
+      createdAt: now,
+      updatedAt: now,
+    };
+    dispatch({ type: 'ADD_LOCATION', location });
+    return location;
+  }, []);
 
   const updateLocation = useCallback(async (id: string, data: Partial<Location>) => {
     dispatch({ type: 'UPDATE_LOCATION', id, data: { ...data, updatedAt: Date.now() } });
@@ -224,22 +219,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'DELETE_LOCATION', id });
   }, []);
 
-  const addBeehive = useCallback(
-    async (name: string, locationId: string): Promise<Beehive> => {
-      const now = Date.now();
-      const beehive: Beehive = {
-        id: randomUUID(),
-        name,
-        locationId,
-        userId: userIdRef.current,
-        createdAt: now,
-        updatedAt: now,
-      };
-      dispatch({ type: 'ADD_BEEHIVE', beehive });
-      return beehive;
-    },
-    []
-  );
+  const addBeehive = useCallback(async (name: string, locationId: string): Promise<Beehive> => {
+    const now = Date.now();
+    const beehive: Beehive = {
+      id: randomUUID(),
+      name,
+      locationId,
+      userId: userIdRef.current,
+      createdAt: now,
+      updatedAt: now,
+    };
+    dispatch({ type: 'ADD_BEEHIVE', beehive });
+    return beehive;
+  }, []);
 
   const updateBeehive = useCallback(async (id: string, data: Partial<Beehive>) => {
     dispatch({ type: 'UPDATE_BEEHIVE', id, data: { ...data, updatedAt: Date.now() } });
@@ -280,7 +272,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'ADD_RECORDING', recording });
       return recording;
     },
-    []
+    [],
   );
 
   const updateRecording = useCallback(async (id: string, data: Partial<Recording>) => {
@@ -339,7 +331,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       // Merge strategy: imported items with same ID update existing; new items are added
       const mergeById = <T extends { id: string; updatedAt: number }>(
         existing: T[],
-        incoming: T[]
+        incoming: T[],
       ): T[] => {
         const map = new Map<string, T>();
         for (const item of existing) {
@@ -385,32 +377,32 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const getBeehivesForLocation = useCallback(
     (locationId: string) => state.beehives.filter((b) => b.locationId === locationId),
-    [state.beehives]
+    [state.beehives],
   );
 
   const getRecordingsForBeehive = useCallback(
     (beehiveId: string) => state.recordings.filter((r) => r.beehiveId === beehiveId),
-    [state.recordings]
+    [state.recordings],
   );
 
   const getRecordingsForLocation = useCallback(
     (locationId: string) => state.recordings.filter((r) => r.locationId === locationId),
-    [state.recordings]
+    [state.recordings],
   );
 
   const getLocationById = useCallback(
     (id: string) => state.locations.find((l) => l.id === id),
-    [state.locations]
+    [state.locations],
   );
 
   const getBeehiveById = useCallback(
     (id: string) => state.beehives.find((b) => b.id === id),
-    [state.beehives]
+    [state.beehives],
   );
 
   const getRecordingById = useCallback(
     (id: string) => state.recordings.find((r) => r.id === id),
-    [state.recordings]
+    [state.recordings],
   );
 
   const value = useMemo(
@@ -455,7 +447,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       getLocationById,
       getBeehiveById,
       getRecordingById,
-    ]
+    ],
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -25,10 +25,7 @@ function RecentScene({ beehiveId }: { beehiveId: string }) {
   const router = useRouter();
   const { getRecordingsForBeehive } = useData();
   const recordings = getRecordingsForBeehive(beehiveId);
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -44,10 +41,7 @@ function PriorityScene({ beehiveId }: { beehiveId: string }) {
   const router = useRouter();
   const { getRecordingsForBeehive } = useData();
   const recordings = getRecordingsForBeehive(beehiveId);
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -64,13 +58,7 @@ export default function BeehiveDetail() {
   const router = useRouter();
   const { t } = useTranslation();
   const layout = useWindowDimensions();
-  const {
-    getBeehiveById,
-    getLocationById,
-    updateBeehive,
-    deleteBeehive,
-    locations,
-  } = useData();
+  const { getBeehiveById, getLocationById, updateBeehive, deleteBeehive, locations } = useData();
 
   const beehive = getBeehiveById(id);
   const location = beehive ? getLocationById(beehive.locationId) : undefined;
@@ -83,7 +71,7 @@ export default function BeehiveDetail() {
       { key: 'recent', title: t('nav.recent') },
       { key: 'priority', title: t('nav.priority') },
     ],
-    [t]
+    [t],
   );
 
   const renderScene = useCallback(
@@ -97,7 +85,7 @@ export default function BeehiveDetail() {
           return null;
       }
     },
-    [id]
+    [id],
   );
 
   const { renderTabBar } = useDetailTabBar(routes);
@@ -109,14 +97,17 @@ export default function BeehiveDetail() {
       }
       setChangingLocation(false);
     },
-    [beehive, updateBeehive]
+    [beehive, updateBeehive],
   );
 
   const handleDelete = useCallback(() => {
     confirmDelete(
       t('beehives.delete'),
       t('beehives.deleteConfirm'),
-      () => { deleteBeehive(id); router.back(); },
+      () => {
+        deleteBeehive(id);
+        router.back();
+      },
       t('common.cancel'),
       t('common.delete'),
     );
@@ -136,7 +127,10 @@ export default function BeehiveDetail() {
         options={{
           title: beehive.name,
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
+            <TouchableOpacity
+              onPress={() => router.push('/settings')}
+              style={styles.settingsButton}
+            >
               <Ionicons name="settings-outline" size={22} color={colors.white} />
             </TouchableOpacity>
           ),
@@ -154,7 +148,11 @@ export default function BeehiveDetail() {
       <View style={styles.locationRow}>
         <Text style={styles.locationLabel}>{t('beehives.location')}: </Text>
         {changingLocation ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.locationScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.locationScroll}
+          >
             {locations.map((loc) => (
               <TouchableOpacity
                 key={loc.id}
@@ -176,7 +174,10 @@ export default function BeehiveDetail() {
             ))}
           </ScrollView>
         ) : (
-          <TouchableOpacity onPress={() => setChangingLocation(true)} style={styles.locationValueRow}>
+          <TouchableOpacity
+            onPress={() => setChangingLocation(true)}
+            style={styles.locationValueRow}
+          >
             <Ionicons name="location-outline" size={16} color={colors.primary} />
             <Text style={styles.locationValue}>{location?.name || '?'}</Text>
             <Ionicons name="create-outline" size={14} color={colors.textLight} />

@@ -33,8 +33,8 @@ export default function PriorityBadge({ priority, onPress, size = 'normal' }: Pr
     priority === Priority.HIGH
       ? t('priority.high')
       : priority === Priority.MEDIUM
-      ? t('priority.medium')
-      : t('priority.low');
+        ? t('priority.medium')
+        : t('priority.low');
 
   const badge = (
     <View
@@ -47,11 +47,7 @@ export default function PriorityBadge({ priority, onPress, size = 'normal' }: Pr
         },
       ]}
     >
-      <Ionicons
-        name={iconName}
-        size={isSmall ? 12 : 14}
-        color={colorScheme.text}
-      />
+      <Ionicons name={iconName} size={isSmall ? 12 : 14} color={colorScheme.text} />
       <Text
         style={[
           styles.text,

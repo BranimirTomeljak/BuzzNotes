@@ -45,10 +45,7 @@ export async function saveLocalRecordings(recordings: Recording[]): Promise<void
 /**
  * Merge local and remote data. Remote wins for conflicts (same id, later updatedAt).
  */
-function mergeArrays<T extends { id: string; updatedAt: number }>(
-  local: T[],
-  remote: T[]
-): T[] {
+function mergeArrays<T extends { id: string; updatedAt: number }>(local: T[], remote: T[]): T[] {
   const map = new Map<string, T>();
 
   for (const item of local) {
@@ -73,7 +70,7 @@ export async function syncWithFirestore(
   userId: string,
   localLocations: Location[],
   localBeehives: Beehive[],
-  localRecordings: Recording[]
+  localRecordings: Recording[],
 ): Promise<{
   locations: Location[];
   beehives: Beehive[];

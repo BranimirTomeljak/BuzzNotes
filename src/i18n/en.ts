@@ -35,7 +35,8 @@ export default {
     empty: 'No locations',
     emptyDesc: 'Add your first apiary location',
     delete: 'Delete location',
-    deleteConfirm: 'Are you sure you want to delete this location and all its beehives and recordings?',
+    deleteConfirm:
+      'Are you sure you want to delete this location and all its beehives and recordings?',
     edit: 'Edit location',
   },
 

@@ -30,9 +30,12 @@ const HEX_POSITIONS = [
   { top: 180, right: 80, size: 28 },
 ] as const;
 
-const hexPositionStyles = HEX_POSITIONS.map((h) =>
-  ({ position: 'absolute' as const, top: h.top, right: h.right, opacity: 0.07 })
-);
+const hexPositionStyles = HEX_POSITIONS.map((h) => ({
+  position: 'absolute' as const,
+  top: h.top,
+  right: h.right,
+  opacity: 0.07,
+}));
 
 function HexPattern({ color }: { color: string }) {
   return (
@@ -50,7 +53,13 @@ function HexPattern({ color }: { color: string }) {
   );
 }
 
-export default function LocationCard({ location, beehiveCount, recordingCount, index, onPress }: LocationCardProps) {
+export default function LocationCard({
+  location,
+  beehiveCount,
+  recordingCount,
+  index,
+  onPress,
+}: LocationCardProps) {
   const { t } = useTranslation();
   const accentColor = ACCENT_COLORS[index % ACCENT_COLORS.length];
 
@@ -69,7 +78,11 @@ export default function LocationCard({ location, beehiveCount, recordingCount, i
           </View>
           <View style={styles.stats}>
             <View style={styles.stat}>
-              <MaterialCommunityIcons name="archive-outline" size={20} color={colors.textSecondary} />
+              <MaterialCommunityIcons
+                name="archive-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
               <Text style={styles.statValue}>{beehiveCount}</Text>
               <Text style={styles.statLabel}>{t('beehives.title')}</Text>
             </View>

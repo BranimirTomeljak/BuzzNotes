@@ -20,7 +20,12 @@ import { savePhoto } from '../src/services/photoStorage';
 import PriorityPicker from '../src/components/PriorityPicker';
 import { colors, spacing, borderRadius, typography } from '../src/theme';
 import { Priority, Location, Beehive } from '../src/models/types';
-import { VOICE_NOTE_PRESET, requestPermissions, configureRecordingMode, configurePlaybackMode } from '../src/services/audio';
+import {
+  VOICE_NOTE_PRESET,
+  requestPermissions,
+  configureRecordingMode,
+  configurePlaybackMode,
+} from '../src/services/audio';
 import { saveRecordingLocally } from '../src/services/storage';
 import { formatDuration } from '../src/utils/formatting';
 
@@ -30,22 +35,18 @@ export default function RecordScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const params = useLocalSearchParams<{ beehiveId?: string; locationId?: string }>();
-  const {
-    locations,
-    addRecording,
-    getBeehivesForLocation,
-  } = useData();
+  const { locations, addRecording, getBeehivesForLocation } = useData();
 
   const recorder = useAudioRecorder(VOICE_NOTE_PRESET);
 
   const [step, setStep] = useState<Step>(
-    params.beehiveId && params.locationId ? 'record' : 'select'
+    params.beehiveId && params.locationId ? 'record' : 'select',
   );
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
-    params.locationId || null
+    params.locationId || null,
   );
   const [selectedBeehiveId, setSelectedBeehiveId] = useState<string | null>(
-    params.beehiveId || null
+    params.beehiveId || null,
   );
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -61,13 +62,15 @@ export default function RecordScreen() {
   useEffect(() => {
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current);
-      try { if (recorder.isRecording) recorder.stop(); } catch { /* already released */ }
+      try {
+        if (recorder.isRecording) recorder.stop();
+      } catch {
+        /* already released */
+      }
     };
   }, [recorder]);
 
-  const availableBeehives = selectedLocationId
-    ? getBeehivesForLocation(selectedLocationId)
-    : [];
+  const availableBeehives = selectedLocationId ? getBeehivesForLocation(selectedLocationId) : [];
 
   const handleStartRecording = useCallback(async () => {
     const hasPermission = await requestPermissions();
@@ -117,7 +120,7 @@ export default function RecordScreen() {
       quality: 0.8,
     });
     if (!result.canceled && result.assets[0]) {
-      setPhotoUris(prev => [...prev, result.assets[0].uri]);
+      setPhotoUris((prev) => [...prev, result.assets[0].uri]);
     }
   }, []);
 
@@ -128,12 +131,12 @@ export default function RecordScreen() {
       allowsMultipleSelection: true,
     });
     if (!result.canceled) {
-      setPhotoUris(prev => [...prev, ...result.assets.map(a => a.uri)]);
+      setPhotoUris((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
     }
   }, []);
 
   const handleRemovePhoto = useCallback((index: number) => {
-    setPhotoUris(prev => prev.filter((_, i) => i !== index));
+    setPhotoUris((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -291,11 +294,7 @@ export default function RecordScreen() {
                 onPress={isRecording ? handleStopRecording : handleStartRecording}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name={isRecording ? 'stop' : 'mic'}
-                  size={48}
-                  color={colors.white}
-                />
+                <Ionicons name={isRecording ? 'stop' : 'mic'} size={48} color={colors.white} />
               </TouchableOpacity>
             </View>
             <Text style={styles.durationText}>{formatDuration(recordingDuration)}</Text>
@@ -338,7 +337,11 @@ export default function RecordScreen() {
                 </TouchableOpacity>
               </View>
               {photoUris.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoPreviewRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.photoPreviewRow}
+                >
                   {photoUris.map((uri, index) => (
                     <View key={uri + index} style={styles.photoPreviewContainer}>
                       <Image source={{ uri }} style={styles.photoPreview} />

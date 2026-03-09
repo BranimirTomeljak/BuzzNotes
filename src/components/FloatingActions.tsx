@@ -73,11 +73,7 @@ export default function FloatingActions() {
         >
           <Ionicons name="location-outline" size={24} color={colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={openBeehiveDialog}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.fab} onPress={openBeehiveDialog} activeOpacity={0.7}>
           <MaterialCommunityIcons name="archive-outline" size={24} color={colors.white} />
         </TouchableOpacity>
         <TouchableOpacity

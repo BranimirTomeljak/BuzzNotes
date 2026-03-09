@@ -71,19 +71,25 @@ export default function RecordingCard({
               <Text style={styles.solvedDate}>{formatDateTime(recording.createdAt)}</Text>
               {beehiveName && (
                 <>
-                  <MaterialCommunityIcons name="archive-outline" size={12} color={colors.textLight} />
-                  <Text style={styles.solvedMeta} numberOfLines={1}>{beehiveName}</Text>
+                  <MaterialCommunityIcons
+                    name="archive-outline"
+                    size={12}
+                    color={colors.textLight}
+                  />
+                  <Text style={styles.solvedMeta} numberOfLines={1}>
+                    {beehiveName}
+                  </Text>
                 </>
               )}
               <Text style={styles.solvedDuration}>{formatDuration(recording.duration)}</Text>
-              <PriorityBadge
-                priority={recording.priority}
-                onPress={cyclePriority}
-                size="small"
-              />
+              <PriorityBadge priority={recording.priority} onPress={cyclePriority} size="small" />
             </View>
             <View style={styles.solvedActions}>
-              <TouchableOpacity onPress={onToggleSolved} style={styles.checkboxButton} activeOpacity={0.6}>
+              <TouchableOpacity
+                onPress={onToggleSolved}
+                style={styles.checkboxButton}
+                activeOpacity={0.6}
+              >
                 <Ionicons name="checkmark-circle" size={28} color={colors.solved} />
               </TouchableOpacity>
               <TouchableOpacity onPress={handleDelete} style={styles.solvedDeleteBtn}>
@@ -104,8 +110,8 @@ export default function RecordingCard({
     recording.priority === Priority.HIGH
       ? colors.priorityHighTint
       : recording.priority === Priority.MEDIUM
-      ? colors.priorityMediumTint
-      : colors.priorityLowTint;
+        ? colors.priorityMediumTint
+        : colors.priorityLowTint;
 
   const hasNotes = !!recording.notes?.trim();
   const hasPhotos = !!recording.photos?.length;
@@ -117,7 +123,11 @@ export default function RecordingCard({
           <Text style={styles.date}>{formatDateTime(recording.createdAt)}</Text>
           {beehiveName && (
             <View style={styles.metaRow}>
-              <MaterialCommunityIcons name="archive-outline" size={14} color={colors.textSecondary} />
+              <MaterialCommunityIcons
+                name="archive-outline"
+                size={14}
+                color={colors.textSecondary}
+              />
               <Text style={styles.meta}>
                 {beehiveName}
                 {locationName ? '  ' : ''}
@@ -132,11 +142,12 @@ export default function RecordingCard({
           )}
         </View>
         <View style={styles.headerRight}>
-          <PriorityBadge
-            priority={recording.priority}
-            onPress={cyclePriority}
-          />
-          <TouchableOpacity onPress={onToggleSolved} style={styles.checkboxButton} activeOpacity={0.6}>
+          <PriorityBadge priority={recording.priority} onPress={cyclePriority} />
+          <TouchableOpacity
+            onPress={onToggleSolved}
+            style={styles.checkboxButton}
+            activeOpacity={0.6}
+          >
             <Ionicons name="checkmark-circle-outline" size={28} color={colors.textLight} />
           </TouchableOpacity>
         </View>
@@ -180,11 +191,7 @@ export default function RecordingCard({
             </Text>
           )}
         </View>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.7}>
           <Ionicons name="trash-outline" size={20} color={colors.danger} />
         </TouchableOpacity>
       </View>

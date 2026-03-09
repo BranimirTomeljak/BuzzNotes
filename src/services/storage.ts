@@ -15,7 +15,7 @@ function ensureRecordingsDir(): void {
 
 export async function saveRecordingLocally(
   sourceUri: string,
-  recordingId: string
+  recordingId: string,
 ): Promise<string> {
   if (Platform.OS === 'web') {
     return sourceUri;
@@ -31,7 +31,7 @@ export async function saveRecordingLocally(
 export async function uploadRecordingToCloud(
   localPath: string,
   userId: string,
-  recordingId: string
+  recordingId: string,
 ): Promise<string> {
   // Lazy import to avoid initializing Firebase when not needed
   const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');

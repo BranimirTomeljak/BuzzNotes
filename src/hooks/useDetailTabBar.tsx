@@ -9,12 +9,9 @@ export function useDetailTabBar(routes: Route[]) {
   const tabOptions = useMemo(
     () =>
       Object.fromEntries(
-        routes.map((route) => [
-          route.key,
-          { labelStyle: detailTabStyles.tabLabel },
-        ])
+        routes.map((route) => [route.key, { labelStyle: detailTabStyles.tabLabel }]),
       ),
-    [routes]
+    [routes],
   );
 
   const renderTabBar = useCallback(
@@ -28,7 +25,7 @@ export function useDetailTabBar(routes: Route[]) {
         options={tabOptions}
       />
     ),
-    [tabOptions]
+    [tabOptions],
   );
 
   return { tabOptions, renderTabBar };

@@ -73,7 +73,7 @@ export async function pushAllData(
   userId: string,
   locations: Location[],
   beehives: Beehive[],
-  recordings: Recording[]
+  recordings: Recording[],
 ): Promise<void> {
   const promises: Promise<void>[] = [];
   locations.forEach((l) => promises.push(saveLocation(l)));

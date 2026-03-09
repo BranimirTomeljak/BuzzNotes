@@ -31,17 +31,17 @@ function LocationsScene() {
 
   const sortedLocations = useMemo(
     () => [...locations].sort((a, b) => a.createdAt - b.createdAt),
-    [locations]
+    [locations],
   );
 
   const getBeehiveCount = useCallback(
     (locationId: string) => beehives.filter((b) => b.locationId === locationId).length,
-    [beehives]
+    [beehives],
   );
 
   const getRecordingCount = useCallback(
     (locationId: string) => recordings.filter((r) => r.locationId === locationId).length,
-    [recordings]
+    [recordings],
   );
 
   const renderItem = useCallback(
@@ -54,7 +54,7 @@ function LocationsScene() {
         onPress={() => router.push(`/location/${item.id}`)}
       />
     ),
-    [getBeehiveCount, getRecordingCount, router]
+    [getBeehiveCount, getRecordingCount, router],
   );
 
   return (
@@ -88,16 +88,13 @@ function RecentScene() {
 
   const getBeehiveName = useCallback(
     (beehiveId: string) => getBeehiveById(beehiveId)?.name,
-    [getBeehiveById]
+    [getBeehiveById],
   );
   const getLocationName = useCallback(
     (locationId: string) => getLocationById(locationId)?.name,
-    [getLocationById]
+    [getLocationById],
   );
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -117,16 +114,13 @@ function PriorityScene() {
 
   const getBeehiveName = useCallback(
     (beehiveId: string) => getBeehiveById(beehiveId)?.name,
-    [getBeehiveById]
+    [getBeehiveById],
   );
   const getLocationName = useCallback(
     (locationId: string) => getLocationById(locationId)?.name,
-    [getLocationById]
+    [getLocationById],
   );
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -173,7 +167,7 @@ export default function MainScreen() {
       { key: 'recent', title: t('nav.recent'), icon: 'time-outline' },
       { key: 'priority', title: t('nav.priority'), icon: 'flag-outline' },
     ],
-    [t]
+    [t],
   );
 
   const tabOptions = useMemo(
@@ -187,9 +181,9 @@ export default function MainScreen() {
             ),
             labelStyle: styles.tabLabel,
           },
-        ])
+        ]),
       ),
-    [routes]
+    [routes],
   );
 
   const renderTabBar = useCallback(
@@ -203,7 +197,7 @@ export default function MainScreen() {
         options={tabOptions}
       />
     ),
-    [insets.bottom, tabOptions]
+    [insets.bottom, tabOptions],
   );
 
   return (
@@ -211,10 +205,7 @@ export default function MainScreen() {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <Text style={styles.headerTitle}>BuzzNotes</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/settings')}
-          style={styles.settingsButton}
-        >
+        <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
           <Ionicons name="settings-outline" size={22} color={colors.white} />
         </TouchableOpacity>
       </View>

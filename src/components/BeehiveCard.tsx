@@ -12,7 +12,12 @@ interface BeehiveCardProps {
   onRecord?: () => void;
 }
 
-export default function BeehiveCard({ beehive, recordingCount, onPress, onRecord }: BeehiveCardProps) {
+export default function BeehiveCard({
+  beehive,
+  recordingCount,
+  onPress,
+  onRecord,
+}: BeehiveCardProps) {
   const { t } = useTranslation();
 
   return (
@@ -24,16 +29,10 @@ export default function BeehiveCard({ beehive, recordingCount, onPress, onRecord
         <Text style={styles.name} numberOfLines={1}>
           {beehive.name}
         </Text>
-        <Text style={styles.count}>
-          {t('beehives.recordingCount', { count: recordingCount })}
-        </Text>
+        <Text style={styles.count}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
       </View>
       {onRecord && (
-        <TouchableOpacity
-          style={styles.recordButton}
-          onPress={onRecord}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.recordButton} onPress={onRecord} activeOpacity={0.7}>
           <Ionicons name="mic" size={20} color={colors.white} />
         </TouchableOpacity>
       )}

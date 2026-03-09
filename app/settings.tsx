@@ -35,7 +35,12 @@ export default function SettingsScreen() {
             style={styles.actionButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="share-outline" size={20} color={colors.white} style={styles.buttonIcon} />
+            <Ionicons
+              name="share-outline"
+              size={20}
+              color={colors.white}
+              style={styles.buttonIcon}
+            />
             <Text style={styles.actionButtonText}>
               {syncing ? t('common.exporting') : t('common.export')}
             </Text>
@@ -47,7 +52,12 @@ export default function SettingsScreen() {
             style={styles.importButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="download-outline" size={20} color={colors.textSecondary} style={styles.buttonIcon} />
+            <Ionicons
+              name="download-outline"
+              size={20}
+              color={colors.textSecondary}
+              style={styles.buttonIcon}
+            />
             <Text style={styles.importButtonText}>{t('common.import')}</Text>
           </TouchableOpacity>
         </View>

@@ -82,9 +82,7 @@ export default function AuthScreen() {
           <View style={styles.header}>
             <Text style={styles.logo}>🐝</Text>
             <Text style={styles.title}>BuzzNotes</Text>
-            <Text style={styles.subtitle}>
-              {isLogin ? t('auth.login') : t('auth.register')}
-            </Text>
+            <Text style={styles.subtitle}>{isLogin ? t('auth.login') : t('auth.register')}</Text>
           </View>
 
           <View style={styles.form}>
@@ -127,8 +125,8 @@ export default function AuthScreen() {
                 {loading
                   ? t('common.loading')
                   : isLogin
-                  ? t('auth.loginButton')
-                  : t('auth.registerButton')}
+                    ? t('auth.loginButton')
+                    : t('auth.registerButton')}
               </Text>
             </TouchableOpacity>
 

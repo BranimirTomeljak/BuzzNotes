@@ -55,9 +55,8 @@ function BeehivesScene({
   }, [beehives, search]);
 
   const recordingsForBeehive = useCallback(
-    (beehiveId: string) =>
-      locationRecordings.filter((r) => r.beehiveId === beehiveId).length,
-    [locationRecordings]
+    (beehiveId: string) => locationRecordings.filter((r) => r.beehiveId === beehiveId).length,
+    [locationRecordings],
   );
 
   const renderBeehive = useCallback(
@@ -71,7 +70,7 @@ function BeehivesScene({
         }
       />
     ),
-    [recordingsForBeehive, router, locationId]
+    [recordingsForBeehive, router, locationId],
   );
 
   return (
@@ -95,7 +94,9 @@ function BeehivesScene({
         contentContainerStyle={sceneStyles.list}
         ListEmptyComponent={
           <EmptyState
-            icon={<MaterialCommunityIcons name="archive-outline" size={40} color={colors.textLight} />}
+            icon={
+              <MaterialCommunityIcons name="archive-outline" size={40} color={colors.textLight} />
+            }
             title={t('beehives.empty')}
             description={t('beehives.emptyDesc')}
           />
@@ -111,12 +112,9 @@ function RecentScene({ locationId }: { locationId: string }) {
   const recordings = getRecordingsForLocation(locationId);
   const getBeehiveName = useCallback(
     (beehiveId: string) => getBeehiveById(beehiveId)?.name,
-    [getBeehiveById]
+    [getBeehiveById],
   );
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -135,12 +133,9 @@ function PriorityScene({ locationId }: { locationId: string }) {
   const recordings = getRecordingsForLocation(locationId);
   const getBeehiveName = useCallback(
     (beehiveId: string) => getBeehiveById(beehiveId)?.name,
-    [getBeehiveById]
+    [getBeehiveById],
   );
-  const handlePress = useCallback(
-    (id: string) => router.push(`/recording/${id}`),
-    [router]
-  );
+  const handlePress = useCallback((id: string) => router.push(`/recording/${id}`), [router]);
 
   return (
     <RecordingListScene
@@ -182,12 +177,7 @@ export default function LocationDetail() {
   const router = useRouter();
   const { t } = useTranslation();
   const layout = useWindowDimensions();
-  const {
-    getLocationById,
-    updateLocation,
-    deleteLocation,
-    addBeehive,
-  } = useData();
+  const { getLocationById, updateLocation, deleteLocation, addBeehive } = useData();
 
   const location = getLocationById(id);
 
@@ -202,7 +192,7 @@ export default function LocationDetail() {
       { key: 'recent', title: t('nav.recent') },
       { key: 'priority', title: t('nav.priority') },
     ],
-    [t]
+    [t],
   );
 
   const renderScene = useCallback(
@@ -225,7 +215,7 @@ export default function LocationDetail() {
           return null;
       }
     },
-    [id, search]
+    [id, search],
   );
 
   const { renderTabBar } = useDetailTabBar(routes);
@@ -234,7 +224,10 @@ export default function LocationDetail() {
     confirmDelete(
       t('locations.delete'),
       t('locations.deleteConfirm'),
-      () => { deleteLocation(id); router.back(); },
+      () => {
+        deleteLocation(id);
+        router.back();
+      },
       t('common.cancel'),
       t('common.delete'),
     );
@@ -262,7 +255,10 @@ export default function LocationDetail() {
         options={{
           title: location.name,
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/settings')} style={styles.settingsButton}>
+            <TouchableOpacity
+              onPress={() => router.push('/settings')}
+              style={styles.settingsButton}
+            >
               <Ionicons name="settings-outline" size={22} color={colors.white} />
             </TouchableOpacity>
           ),
@@ -288,7 +284,13 @@ export default function LocationDetail() {
 
       {/* Add Beehive Modal */}
       <Modal visible={showAddBeehive} transparent animationType="fade">
-        <Pressable style={styles.overlay} onPress={() => { setShowAddBeehive(false); setNewBeehiveName(''); }}>
+        <Pressable
+          style={styles.overlay}
+          onPress={() => {
+            setShowAddBeehive(false);
+            setNewBeehiveName('');
+          }}
+        >
           <Pressable style={styles.dialog} onPress={() => {}}>
             <Text style={styles.dialogTitle}>{t('beehives.add')}</Text>
             <TextInput
@@ -303,12 +305,18 @@ export default function LocationDetail() {
             <View style={styles.dialogActions}>
               <TouchableOpacity
                 style={styles.dialogCancelButton}
-                onPress={() => { setShowAddBeehive(false); setNewBeehiveName(''); }}
+                onPress={() => {
+                  setShowAddBeehive(false);
+                  setNewBeehiveName('');
+                }}
               >
                 <Text style={styles.dialogCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.dialogSaveButton, !newBeehiveName.trim() && styles.dialogSaveButtonDisabled]}
+                style={[
+                  styles.dialogSaveButton,
+                  !newBeehiveName.trim() && styles.dialogSaveButtonDisabled,
+                ]}
                 onPress={handleAddBeehive}
                 disabled={!newBeehiveName.trim()}
               >

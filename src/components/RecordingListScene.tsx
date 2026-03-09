@@ -29,10 +29,7 @@ export default function RecordingListScene({
 
   const sorted = useMemo(() => sortFn(recordings), [recordings, sortFn]);
 
-  const firstSolvedId = useMemo(
-    () => sorted.find((r) => r.solved)?.id ?? null,
-    [sorted]
-  );
+  const firstSolvedId = useMemo(() => sorted.find((r) => r.solved)?.id ?? null, [sorted]);
 
   const renderItem = useCallback(
     ({ item }: { item: Recording }) => (
@@ -48,7 +45,14 @@ export default function RecordingListScene({
         onPress={onPressRecording ? () => onPressRecording(item.id) : undefined}
       />
     ),
-    [getBeehiveName, getLocationName, firstSolvedId, updateRecording, deleteRecording, onPressRecording]
+    [
+      getBeehiveName,
+      getLocationName,
+      firstSolvedId,
+      updateRecording,
+      deleteRecording,
+      onPressRecording,
+    ],
   );
 
   return (

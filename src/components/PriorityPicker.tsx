@@ -10,7 +10,12 @@ interface PriorityPickerProps {
   onSelect: (priority: Priority) => void;
 }
 
-const OPTIONS: { priority: Priority; iconName: keyof typeof Ionicons.glyphMap; colorBg: string; colorText: string }[] = [
+const OPTIONS: {
+  priority: Priority;
+  iconName: keyof typeof Ionicons.glyphMap;
+  colorBg: string;
+  colorText: string;
+}[] = [
   {
     priority: Priority.HIGH,
     iconName: 'alert-circle',
@@ -58,8 +63,8 @@ export default function PriorityPicker({ selected, onSelect }: PriorityPickerPro
               {opt.priority === Priority.HIGH
                 ? t('priority.high')
                 : opt.priority === Priority.MEDIUM
-                ? t('priority.medium')
-                : t('priority.low')}
+                  ? t('priority.medium')
+                  : t('priority.low')}
             </Text>
           </TouchableOpacity>
         );
