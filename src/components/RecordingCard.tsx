@@ -102,10 +102,10 @@ export default function RecordingCard({
   // Unsolved: full card
   const priorityTint =
     recording.priority === Priority.HIGH
-      ? '#FFECEC'
+      ? colors.priorityHighTint
       : recording.priority === Priority.MEDIUM
-      ? '#FFF8E0'
-      : '#ECF2FF';
+      ? colors.priorityMediumTint
+      : colors.priorityLowTint;
 
   return (
     <View style={[styles.card, { backgroundColor: priorityTint }]}>

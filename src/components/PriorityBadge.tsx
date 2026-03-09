@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 
 interface PriorityBadgeProps {
   priority: Priority;
-  solved?: boolean;
   onPress?: () => void;
   size?: 'small' | 'normal';
 }
@@ -24,7 +23,7 @@ const PRIORITY_ICONS: Record<Priority, keyof typeof Ionicons.glyphMap> = {
   [Priority.LOW]: 'information-circle-outline',
 };
 
-export default function PriorityBadge({ priority, solved, onPress, size = 'normal' }: PriorityBadgeProps) {
+export default function PriorityBadge({ priority, onPress, size = 'normal' }: PriorityBadgeProps) {
   const { t } = useTranslation();
   const colorScheme = PRIORITY_COLORS[priority];
   const iconName = PRIORITY_ICONS[priority];

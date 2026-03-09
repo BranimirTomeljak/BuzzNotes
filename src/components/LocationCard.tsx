@@ -15,31 +15,35 @@ interface LocationCardProps {
   onPress: () => void;
 }
 
-function HexPattern({ color }: { color: string }) {
-  const hexes = [
-    { top: 8, right: 12, size: 32 },
-    { top: 6, right: 52, size: 28 },
-    { top: 38, right: 30, size: 24 },
-    { top: 44, right: 72, size: 30 },
-    { top: 70, right: 8, size: 26 },
-    { top: 76, right: 56, size: 22 },
-    { top: 108, right: 34, size: 28 },
-    { top: 100, right: 78, size: 24 },
-    { top: 140, right: 14, size: 30 },
-    { top: 148, right: 60, size: 26 },
-    { top: 170, right: 40, size: 22 },
-    { top: 180, right: 80, size: 28 },
-  ];
+const HEX_POSITIONS = [
+  { top: 8, right: 12, size: 32 },
+  { top: 6, right: 52, size: 28 },
+  { top: 38, right: 30, size: 24 },
+  { top: 44, right: 72, size: 30 },
+  { top: 70, right: 8, size: 26 },
+  { top: 76, right: 56, size: 22 },
+  { top: 108, right: 34, size: 28 },
+  { top: 100, right: 78, size: 24 },
+  { top: 140, right: 14, size: 30 },
+  { top: 148, right: 60, size: 26 },
+  { top: 170, right: 40, size: 22 },
+  { top: 180, right: 80, size: 28 },
+] as const;
 
+const hexPositionStyles = HEX_POSITIONS.map((h) =>
+  ({ position: 'absolute' as const, top: h.top, right: h.right, opacity: 0.07 })
+);
+
+function HexPattern({ color }: { color: string }) {
   return (
     <View style={styles.hexOverlay} pointerEvents="none">
-      {hexes.map((h, i) => (
+      {HEX_POSITIONS.map((h, i) => (
         <MaterialCommunityIcons
           key={i}
           name="hexagon-outline"
           size={h.size}
           color={color}
-          style={{ position: 'absolute', top: h.top, right: h.right, opacity: 0.07 }}
+          style={hexPositionStyles[i]}
         />
       ))}
     </View>

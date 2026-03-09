@@ -13,10 +13,13 @@ export const colors = {
 
   priorityHigh: '#EF5350',
   priorityHighBg: '#FFEBEE',
+  priorityHighTint: '#FFECEC',
   priorityMedium: '#F9A825',
   priorityMediumBg: '#FEF7CD',
+  priorityMediumTint: '#FFF8E0',
   priorityLow: '#5C9CE6',
   priorityLowBg: '#EBF3FE',
+  priorityLowTint: '#ECF2FF',
   solved: '#4CAF50',
   solvedBg: '#E8F5E9',
 
