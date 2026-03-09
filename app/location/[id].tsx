@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  Alert,
-  Platform,
   Modal,
   Pressable,
   useWindowDimensions,
@@ -15,16 +13,19 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { TabView, TabBar, SceneRendererProps, NavigationState } from 'react-native-tab-view';
+import { TabView, SceneRendererProps } from 'react-native-tab-view';
 import Toast from 'react-native-toast-message';
 import { useData } from '../../src/contexts/DataContext';
 import BeehiveCard from '../../src/components/BeehiveCard';
-import RecordingCard from '../../src/components/RecordingCard';
+import RecordingListScene from '../../src/components/RecordingListScene';
+import EditableNameRow from '../../src/components/EditableNameRow';
 import SearchBar from '../../src/components/SearchBar';
 import EmptyState from '../../src/components/EmptyState';
 import { colors, spacing, borderRadius, typography } from '../../src/theme';
 import { naturalSort, sortByRecent, sortByPriority } from '../../src/utils/sorting';
-import { Beehive, Recording, Priority } from '../../src/models/types';
+import { confirmDelete } from '../../src/utils/confirmDelete';
+import { useDetailTabBar } from '../../src/hooks/useDetailTabBar';
+import { Beehive } from '../../src/models/types';
 
 type Route = { key: string; title: string };
 
@@ -105,95 +106,37 @@ function BeehivesScene({
 }
 
 function RecentScene({ locationId }: { locationId: string }) {
-  const { t } = useTranslation();
-  const { getRecordingsForLocation, updateRecording, deleteRecording, getBeehiveById } = useData();
-
-  const locationRecordings = getRecordingsForLocation(locationId);
-  const recentRecordings = useMemo(() => sortByRecent(locationRecordings), [locationRecordings]);
-
-  const firstSolvedId = useMemo(
-    () => recentRecordings.find((r) => r.solved)?.id ?? null,
-    [recentRecordings]
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Recording }) => {
-      const beehive = getBeehiveById(item.beehiveId);
-      return (
-        <RecordingCard
-          recording={item}
-          beehiveName={beehive?.name}
-          showSolvedDivider={item.id === firstSolvedId}
-          onUpdatePriority={(priority: Priority) => updateRecording(item.id, { priority })}
-          onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
-          onDelete={() => deleteRecording(item.id)}
-          onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
-        />
-      );
-    },
-    [getBeehiveById, updateRecording, deleteRecording, firstSolvedId]
+  const { getRecordingsForLocation, getBeehiveById } = useData();
+  const recordings = getRecordingsForLocation(locationId);
+  const getBeehiveName = useCallback(
+    (beehiveId: string) => getBeehiveById(beehiveId)?.name,
+    [getBeehiveById]
   );
 
   return (
-    <FlatList
-      data={recentRecordings}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={sceneStyles.list}
-      ListEmptyComponent={
-        <EmptyState
-          icon={<Ionicons name="time-outline" size={40} color={colors.textLight} />}
-          title={t('recordings.empty')}
-          description={t('recordings.emptyDesc')}
-        />
-      }
+    <RecordingListScene
+      recordings={recordings}
+      sortFn={sortByRecent}
+      emptyIcon={<Ionicons name="time-outline" size={40} color={colors.textLight} />}
+      getBeehiveName={getBeehiveName}
     />
   );
 }
 
 function PriorityScene({ locationId }: { locationId: string }) {
-  const { t } = useTranslation();
-  const { getRecordingsForLocation, updateRecording, deleteRecording, getBeehiveById } = useData();
-
-  const locationRecordings = getRecordingsForLocation(locationId);
-  const priorityRecordings = useMemo(() => sortByPriority(locationRecordings), [locationRecordings]);
-
-  const firstSolvedId = useMemo(
-    () => priorityRecordings.find((r) => r.solved)?.id ?? null,
-    [priorityRecordings]
-  );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Recording }) => {
-      const beehive = getBeehiveById(item.beehiveId);
-      return (
-        <RecordingCard
-          recording={item}
-          beehiveName={beehive?.name}
-          showSolvedDivider={item.id === firstSolvedId}
-          onUpdatePriority={(priority: Priority) => updateRecording(item.id, { priority })}
-          onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
-          onDelete={() => deleteRecording(item.id)}
-          onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
-        />
-      );
-    },
-    [getBeehiveById, updateRecording, deleteRecording, firstSolvedId]
+  const { getRecordingsForLocation, getBeehiveById } = useData();
+  const recordings = getRecordingsForLocation(locationId);
+  const getBeehiveName = useCallback(
+    (beehiveId: string) => getBeehiveById(beehiveId)?.name,
+    [getBeehiveById]
   );
 
   return (
-    <FlatList
-      data={priorityRecordings}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={sceneStyles.list}
-      ListEmptyComponent={
-        <EmptyState
-          icon={<Ionicons name="flag-outline" size={40} color={colors.textLight} />}
-          title={t('recordings.empty')}
-          description={t('recordings.emptyDesc')}
-        />
-      }
+    <RecordingListScene
+      recordings={recordings}
+      sortFn={sortByPriority}
+      emptyIcon={<Ionicons name="flag-outline" size={40} color={colors.textLight} />}
+      getBeehiveName={getBeehiveName}
     />
   );
 }
@@ -238,8 +181,6 @@ export default function LocationDetail() {
 
   const [tabIndex, setTabIndex] = useState(0);
   const [search, setSearch] = useState('');
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(location?.name || '');
   const [showAddBeehive, setShowAddBeehive] = useState(false);
   const [newBeehiveName, setNewBeehiveName] = useState('');
 
@@ -275,52 +216,16 @@ export default function LocationDetail() {
     [id, search]
   );
 
-  const tabOptions = useMemo(
-    () =>
-      Object.fromEntries(
-        routes.map((route) => [
-          route.key,
-          { labelStyle: styles.tabLabelTop },
-        ])
-      ),
-    [routes]
-  );
-
-  const renderTabBar = useCallback(
-    (props: SceneRendererProps & { navigationState: NavigationState<Route> }) => (
-      <TabBar
-        {...props}
-        style={styles.tabBarTop}
-        indicatorStyle={styles.tabIndicator}
-        activeColor={colors.primary}
-        inactiveColor={colors.textLight}
-        options={tabOptions}
-      />
-    ),
-    [tabOptions]
-  );
-
-  const handleSaveName = useCallback(() => {
-    if (nameInput.trim() && location) {
-      updateLocation(location.id, { name: nameInput.trim() });
-    }
-    setEditingName(false);
-  }, [nameInput, location, updateLocation]);
+  const { renderTabBar } = useDetailTabBar(routes);
 
   const handleDelete = useCallback(() => {
-    const doDelete = () => {
-      deleteLocation(id);
-      router.back();
-    };
-
-    if (Platform.OS === 'web') {
-      if (confirm(t('locations.deleteConfirm'))) doDelete();
-    } else {
-      Alert.alert(t('locations.delete'), t('locations.deleteConfirm'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: doDelete },
-      ]);
-    }
+    confirmDelete(
+      t('locations.delete'),
+      t('locations.deleteConfirm'),
+      () => { deleteLocation(id); router.back(); },
+      t('common.cancel'),
+      t('common.delete'),
+    );
   }, [id, deleteLocation, router, t]);
 
   const handleAddBeehive = useCallback(async () => {
@@ -352,42 +257,12 @@ export default function LocationDetail() {
         }}
       />
 
-      {/* Editable name + delete */}
-      <View style={styles.nameRow}>
-        {editingName ? (
-          <View style={styles.editRow}>
-            <TextInput
-              style={styles.nameInput}
-              value={nameInput}
-              onChangeText={setNameInput}
-              autoFocus
-              onSubmitEditing={handleSaveName}
-            />
-            <TouchableOpacity onPress={handleSaveName} style={styles.saveNameBtn}>
-              <Ionicons name="checkmark" size={24} color={colors.white} />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.nameAndActions}>
-            <TouchableOpacity
-              style={styles.nameButton}
-              onPress={() => {
-                setNameInput(location.name);
-                setEditingName(true);
-              }}
-            >
-              <View style={styles.nameWithIcon}>
-                <Ionicons name="location-outline" size={22} color={colors.primary} />
-                <Text style={styles.locationName}>{location.name}</Text>
-                <Ionicons name="create-outline" size={18} color={colors.textLight} />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-              <Ionicons name="trash-outline" size={22} color={colors.danger} />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      <EditableNameRow
+        name={location.name}
+        icon="location-outline"
+        onSave={(newName) => updateLocation(location.id, { name: newName })}
+        onDelete={handleDelete}
+      />
 
       {/* Swipeable Tabs */}
       <TabView
@@ -445,74 +320,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xxl,
   },
-  nameRow: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  editRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  nameInput: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    fontSize: 20,
-    color: colors.text,
-    fontWeight: '600',
-  },
-  saveNameBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nameWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  locationName: {
-    ...typography.h2,
-    flex: 1,
-  },
-  nameAndActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  nameButton: {
-    flex: 1,
-  },
-  deleteButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   settingsButton: {
     padding: spacing.sm,
     marginRight: spacing.sm,
-  },
-  tabBarTop: {
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  tabIndicator: {
-    backgroundColor: colors.primary,
-    height: 2,
-  },
-  tabLabelTop: {
-    fontWeight: '600',
-    fontSize: 14,
-    textTransform: 'none',
   },
   overlay: {
     flex: 1,

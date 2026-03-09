@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Recording, Priority } from '../models/types';
 import { colors, spacing, borderRadius, typography, shadows } from '../theme';
@@ -7,6 +7,7 @@ import { formatDateTime, formatDuration } from '../utils/formatting';
 import PriorityBadge from './PriorityBadge';
 import AudioPlayer from './AudioPlayer';
 import { useTranslation } from 'react-i18next';
+import { confirmDelete } from '../utils/confirmDelete';
 
 interface RecordingCardProps {
   recording: Recording;
@@ -40,16 +41,13 @@ export default function RecordingCard({
   }, [recording.priority, onUpdatePriority]);
 
   const handleDelete = useCallback(() => {
-    if (Platform.OS === 'web') {
-      if (confirm(t('recordings.deleteConfirm'))) {
-        onDelete();
-      }
-    } else {
-      Alert.alert(t('recordings.delete'), t('recordings.deleteConfirm'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.delete'), style: 'destructive', onPress: onDelete },
-      ]);
-    }
+    confirmDelete(
+      t('recordings.delete'),
+      t('recordings.deleteConfirm'),
+      onDelete,
+      t('common.cancel'),
+      t('common.delete'),
+    );
   }, [onDelete, t]);
 
   const audioUri = recording.localPath || recording.audioUrl;

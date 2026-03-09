@@ -15,12 +15,12 @@ import { TabView, TabBar, SceneRendererProps, NavigationState } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useData } from '../../src/contexts/DataContext';
 import LocationCard from '../../src/components/LocationCard';
-import RecordingCard from '../../src/components/RecordingCard';
+import RecordingListScene from '../../src/components/RecordingListScene';
 import EmptyState from '../../src/components/EmptyState';
 import FloatingActions from '../../src/components/FloatingActions';
 import { colors, spacing } from '../../src/theme';
 import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
-import { Location, Recording, Priority } from '../../src/models/types';
+import { Location } from '../../src/models/types';
 
 type Route = { key: string; title: string; icon: React.ComponentProps<typeof Ionicons>['name'] };
 
@@ -83,121 +83,47 @@ function LocationsScene() {
 }
 
 function RecentScene() {
-  const { t } = useTranslation();
-  const {
-    recordings,
-    updateRecording,
-    deleteRecording,
-    getBeehiveById,
-    getLocationById,
-  } = useData();
+  const { recordings, getBeehiveById, getLocationById } = useData();
 
-  const sortedRecordings = useMemo(() => sortByRecent(recordings), [recordings]);
-
-  const firstSolvedId = useMemo(
-    () => sortedRecordings.find((r) => r.solved)?.id ?? null,
-    [sortedRecordings]
+  const getBeehiveName = useCallback(
+    (beehiveId: string) => getBeehiveById(beehiveId)?.name,
+    [getBeehiveById]
   );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Recording }) => {
-      const beehive = getBeehiveById(item.beehiveId);
-      const location = getLocationById(item.locationId);
-      return (
-        <RecordingCard
-          recording={item}
-          beehiveName={beehive?.name}
-          locationName={location?.name}
-          showSolvedDivider={item.id === firstSolvedId}
-          onUpdatePriority={(priority: Priority) =>
-            updateRecording(item.id, { priority })
-          }
-          onToggleSolved={() =>
-            updateRecording(item.id, { solved: !item.solved })
-          }
-          onDelete={() => deleteRecording(item.id)}
-          onPlay={() =>
-            updateRecording(item.id, { lastListenedAt: Date.now() })
-          }
-        />
-      );
-    },
-    [getBeehiveById, getLocationById, updateRecording, deleteRecording, firstSolvedId]
+  const getLocationName = useCallback(
+    (locationId: string) => getLocationById(locationId)?.name,
+    [getLocationById]
   );
 
   return (
-    <FlatList
-      data={sortedRecordings}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={sceneStyles.list}
-      ListEmptyComponent={
-        <EmptyState
-          icon={<Ionicons name="time-outline" size={40} color={colors.textLight} />}
-          title={t('recordings.empty')}
-          description={t('recordings.emptyDesc')}
-        />
-      }
+    <RecordingListScene
+      recordings={recordings}
+      sortFn={sortByRecent}
+      emptyIcon={<Ionicons name="time-outline" size={40} color={colors.textLight} />}
+      getBeehiveName={getBeehiveName}
+      getLocationName={getLocationName}
     />
   );
 }
 
 function PriorityScene() {
-  const { t } = useTranslation();
-  const {
-    recordings,
-    updateRecording,
-    deleteRecording,
-    getBeehiveById,
-    getLocationById,
-  } = useData();
+  const { recordings, getBeehiveById, getLocationById } = useData();
 
-  const sortedRecordings = useMemo(() => sortByPriority(recordings), [recordings]);
-
-  const firstSolvedId = useMemo(
-    () => sortedRecordings.find((r) => r.solved)?.id ?? null,
-    [sortedRecordings]
+  const getBeehiveName = useCallback(
+    (beehiveId: string) => getBeehiveById(beehiveId)?.name,
+    [getBeehiveById]
   );
-
-  const renderItem = useCallback(
-    ({ item }: { item: Recording }) => {
-      const beehive = getBeehiveById(item.beehiveId);
-      const location = getLocationById(item.locationId);
-      return (
-        <RecordingCard
-          recording={item}
-          beehiveName={beehive?.name}
-          locationName={location?.name}
-          showSolvedDivider={item.id === firstSolvedId}
-          onUpdatePriority={(priority: Priority) =>
-            updateRecording(item.id, { priority })
-          }
-          onToggleSolved={() =>
-            updateRecording(item.id, { solved: !item.solved })
-          }
-          onDelete={() => deleteRecording(item.id)}
-          onPlay={() =>
-            updateRecording(item.id, { lastListenedAt: Date.now() })
-          }
-        />
-      );
-    },
-    [getBeehiveById, getLocationById, updateRecording, deleteRecording, firstSolvedId]
+  const getLocationName = useCallback(
+    (locationId: string) => getLocationById(locationId)?.name,
+    [getLocationById]
   );
 
   return (
-    <FlatList
-      data={sortedRecordings}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={sceneStyles.list}
-      ListEmptyComponent={
-        <EmptyState
-          icon={<Ionicons name="flag-outline" size={40} color={colors.textLight} />}
-          title={t('recordings.empty')}
-          description={t('recordings.emptyDesc')}
-        />
-      }
+    <RecordingListScene
+      recordings={recordings}
+      sortFn={sortByPriority}
+      emptyIcon={<Ionicons name="flag-outline" size={40} color={colors.textLight} />}
+      getBeehiveName={getBeehiveName}
+      getLocationName={getLocationName}
     />
   );
 }
