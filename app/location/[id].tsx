@@ -24,6 +24,7 @@ import EmptyState from '../../src/components/EmptyState';
 import { colors, spacing, borderRadius, typography } from '../../src/theme';
 import { naturalSort, sortByRecent, sortByPriority } from '../../src/utils/sorting';
 import { confirmDelete } from '../../src/utils/confirmDelete';
+import { hapticWarning } from '../../src/utils/haptics';
 import { useDetailTabBar } from '../../src/hooks/useDetailTabBar';
 import { Beehive } from '../../src/models/types';
 
@@ -221,6 +222,7 @@ export default function LocationDetail() {
   const { renderTabBar } = useDetailTabBar(routes);
 
   const handleDelete = useCallback(() => {
+    hapticWarning();
     confirmDelete(
       t('locations.delete'),
       t('locations.deleteConfirm'),

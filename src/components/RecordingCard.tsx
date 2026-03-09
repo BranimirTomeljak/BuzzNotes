@@ -8,6 +8,7 @@ import PriorityBadge from './PriorityBadge';
 import AudioPlayer from './AudioPlayer';
 import { useTranslation } from 'react-i18next';
 import { confirmDelete } from '../utils/confirmDelete';
+import { hapticLight, hapticSuccess, hapticWarning } from '../utils/haptics';
 
 interface RecordingCardProps {
   recording: Recording;
@@ -37,12 +38,19 @@ export default function RecordingCard({
   const { t } = useTranslation();
 
   const cyclePriority = useCallback(() => {
+    hapticLight();
     const idx = PRIORITY_CYCLE.indexOf(recording.priority);
     const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length];
     onUpdatePriority(next);
   }, [recording.priority, onUpdatePriority]);
 
+  const handleToggleSolved = useCallback(() => {
+    hapticSuccess();
+    onToggleSolved();
+  }, [onToggleSolved]);
+
   const handleDelete = useCallback(() => {
+    hapticWarning();
     confirmDelete(
       t('recordings.delete'),
       t('recordings.deleteConfirm'),
@@ -86,7 +94,7 @@ export default function RecordingCard({
             </View>
             <View style={styles.solvedActions}>
               <TouchableOpacity
-                onPress={onToggleSolved}
+                onPress={handleToggleSolved}
                 style={styles.checkboxButton}
                 activeOpacity={0.6}
               >
@@ -144,7 +152,7 @@ export default function RecordingCard({
         <View style={styles.headerRight}>
           <PriorityBadge priority={recording.priority} onPress={cyclePriority} />
           <TouchableOpacity
-            onPress={onToggleSolved}
+            onPress={handleToggleSolved}
             style={styles.checkboxButton}
             activeOpacity={0.6}
           >

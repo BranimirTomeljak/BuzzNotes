@@ -15,6 +15,7 @@ import { useData } from '../../src/contexts/DataContext';
 import RecordingListScene from '../../src/components/RecordingListScene';
 import EditableNameRow from '../../src/components/EditableNameRow';
 import { confirmDelete } from '../../src/utils/confirmDelete';
+import { hapticWarning } from '../../src/utils/haptics';
 import { useDetailTabBar } from '../../src/hooks/useDetailTabBar';
 import { colors, spacing, borderRadius, typography } from '../../src/theme';
 import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
@@ -101,6 +102,7 @@ export default function BeehiveDetail() {
   );
 
   const handleDelete = useCallback(() => {
+    hapticWarning();
     confirmDelete(
       t('beehives.delete'),
       t('beehives.deleteConfirm'),

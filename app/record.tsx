@@ -28,6 +28,7 @@ import {
 } from '../src/services/audio';
 import { saveRecordingLocally } from '../src/services/storage';
 import { formatDuration } from '../src/utils/formatting';
+import { hapticMedium, hapticSuccess } from '../src/utils/haptics';
 
 type Step = 'select' | 'record' | 'priority';
 
@@ -83,6 +84,7 @@ export default function RecordScreen() {
       await configureRecordingMode();
       await recorder.prepareToRecordAsync();
       recorder.record();
+      hapticMedium();
       setIsRecording(true);
       setRecordingDuration(0);
       durationInterval.current = setInterval(() => {
@@ -101,6 +103,7 @@ export default function RecordScreen() {
 
     try {
       await recorder.stop();
+      hapticMedium();
       await configurePlaybackMode();
       const uri = recorder.uri;
       const duration = Math.round(recorder.currentTime);
@@ -164,6 +167,7 @@ export default function RecordScreen() {
         photos: savedPhotoPaths,
       });
 
+      hapticSuccess();
       Toast.show({ type: 'success', text1: t('recordings.saved'), visibilityTime: 1500 });
       router.replace(`/beehive/${selectedBeehiveId}`);
     } catch {

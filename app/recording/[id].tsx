@@ -21,6 +21,7 @@ import { savePhoto, deletePhoto } from '../../src/services/photoStorage';
 import AudioPlayer from '../../src/components/AudioPlayer';
 import PriorityBadge from '../../src/components/PriorityBadge';
 import { confirmDelete } from '../../src/utils/confirmDelete';
+import { hapticLight, hapticSuccess, hapticWarning } from '../../src/utils/haptics';
 import { colors, spacing, borderRadius, typography, shadows } from '../../src/theme';
 import { formatDateTime, formatDuration } from '../../src/utils/formatting';
 import { Priority } from '../../src/models/types';
@@ -49,6 +50,7 @@ export default function RecordingDetail() {
 
   const cyclePriority = useCallback(() => {
     if (!recording) return;
+    hapticLight();
     const idx = PRIORITY_CYCLE.indexOf(recording.priority);
     const next = PRIORITY_CYCLE[(idx + 1) % PRIORITY_CYCLE.length];
     updateRecording(id, { priority: next });
@@ -56,10 +58,12 @@ export default function RecordingDetail() {
 
   const handleToggleSolved = useCallback(() => {
     if (!recording) return;
+    hapticSuccess();
     updateRecording(id, { solved: !recording.solved });
   }, [recording, id, updateRecording]);
 
   const handleDelete = useCallback(() => {
+    hapticWarning();
     confirmDelete(
       t('recordings.delete'),
       t('recordings.deleteConfirm'),
