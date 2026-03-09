@@ -83,8 +83,9 @@ export async function importData(): Promise<{
   }
 
   // Restore audio files
+  let recordingsDir: Directory | null = null;
   if (Platform.OS !== 'web') {
-    const recordingsDir = getRecordingsDir();
+    recordingsDir = getRecordingsDir();
     if (!recordingsDir.exists) {
       recordingsDir.create();
     }
@@ -97,9 +98,15 @@ export async function importData(): Promise<{
     }
   }
 
-  // Strip audioBase64 from recordings before returning
+  // Strip audioBase64 and update localPath to new device path
   const cleanRecordings: Recording[] = data.recordings.map(
-    ({ audioBase64, ...rec }) => rec
+    ({ audioBase64, ...rec }) => {
+      if (audioBase64 && recordingsDir) {
+        const destFile = new File(recordingsDir, `${rec.id}.m4a`);
+        return { ...rec, localPath: destFile.uri };
+      }
+      return rec;
+    }
   );
 
   return {

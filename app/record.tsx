@@ -55,8 +55,9 @@ export default function RecordScreen() {
   useEffect(() => {
     return () => {
       if (durationInterval.current) clearInterval(durationInterval.current);
+      if (recorder.isRecording) recorder.stop();
     };
-  }, []);
+  }, [recorder]);
 
   const availableBeehives = selectedLocationId
     ? getBeehivesForLocation(selectedLocationId)
@@ -121,8 +122,7 @@ export default function RecordScreen() {
       });
 
       Toast.show({ type: 'success', text1: t('recordings.saved'), visibilityTime: 1500 });
-      router.dismiss();
-      router.push(`/beehive/${selectedBeehiveId}`);
+      router.replace(`/beehive/${selectedBeehiveId}`);
     } catch {
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     } finally {
