@@ -78,6 +78,7 @@ export default {
     solved: 'Solved',
     unsolved: 'Unsolved',
     unresolve: 'Unresolve',
+    micPermission: 'Microphone permission required',
   },
 
   // Priority

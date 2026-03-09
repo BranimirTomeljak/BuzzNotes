@@ -66,7 +66,7 @@ export default function RecordScreen() {
   const handleStartRecording = useCallback(async () => {
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
-      Toast.show({ type: 'error', text1: 'Microphone permission required', visibilityTime: 2000 });
+      Toast.show({ type: 'error', text1: t('recordings.micPermission'), visibilityTime: 2000 });
       return;
     }
 

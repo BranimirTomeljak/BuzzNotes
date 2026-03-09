@@ -13,7 +13,6 @@
     "expo": "~54.0.33",
     "expo-asset": "~12.0.12",
     "expo-audio": "~1.1.1",
-    "expo-av": "~16.0.8",
     "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.8",
     "expo-file-system": "~19.0.21",
@@ -33,13 +32,11 @@
     "react-native-screens": "~4.16.0",
     "react-native-tab-view": "^4.2.2",
     "react-native-toast-message": "^2.3.3",
-    "react-native-web": "^0.21.0",
-    "uuid": "^13.0.0"
+    "react-native-web": "^0.21.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.0",
-    "@types/uuid": "^10.0.0",
     "typescript": "~5.9.2"
   },
   "private": true

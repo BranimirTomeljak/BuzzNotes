@@ -78,6 +78,7 @@ export default {
     solved: 'Riješeno',
     unsolved: 'Neriješeno',
     unresolve: 'Vrati',
+    micPermission: 'Potrebna dozvola za mikrofon',
   },
 
   // Priority

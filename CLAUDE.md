@@ -177,3 +177,6 @@ Expo Router auto-discovers and evaluates all files in `app/`. The `auth.tsx` scr
 - **expo-av deprecated in SDK 54**: Use `expo-audio` package instead. Hooks: `useAudioPlayer`, `useAudioPlayerStatus`, `useAudioRecorder`.
 - **Slider drag**: Must use `pageX` (absolute coordinates) with `measureInWindow`, not `locationX` (relative to element). Store callbacks in refs to avoid stale PanResponder closures.
 - **Expo Router auto-evaluation**: All files in `app/` are discovered and evaluated as routes, even if not rendered. Keep files with heavy imports (Firebase) out of `app/` until needed.
+- **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
+- **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount.
+- **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
