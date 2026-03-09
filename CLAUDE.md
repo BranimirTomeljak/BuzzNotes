@@ -22,6 +22,35 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - `npx tsc --noEmit` - TypeScript type check
 - `npx expo export --platform web` - Verify web build
 
+### EAS Build (Android APK/AAB)
+
+`eas.json` has two profiles:
+- **`preview`** — builds an APK (directly installable on Android)
+- **`production`** — builds AAB (for Play Store upload)
+
+Login first: `npx eas-cli login`
+
+Build APK: `npx eas-cli build --platform android --profile preview`
+
+This runs in the cloud on EAS servers (free tier: 30 builds/month). It will:
+1. Upload the project
+2. Build the APK (~5-10 min)
+3. Return a download link for the `.apk`
+
+Expo account required — sign up free at https://expo.dev/signup
+
+### GitHub Auto-Build
+
+EAS Workflows auto-build on every push to `master`. Config: `.eas/workflows/build-android-preview.yml`.
+
+**Setup (one-time):**
+1. Link GitHub repo in Expo dashboard → Project Settings → GitHub
+2. Run at least one CLI build first (`npx eas-cli build --platform android --profile preview`)
+
+After that, every push to `master` triggers an APK build in the cloud. Download link appears in Expo dashboard → Builds.
+
+**Skip a build:** Include `[skip eas]` in the commit message.
+
 ## Project Structure
 - `app/` - Expo Router screens (tabs, location/[id], beehive/[id], record, settings)
 - `src/components/` - Reusable UI components
