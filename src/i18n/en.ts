@@ -89,6 +89,8 @@ export default {
     removePhoto: 'Remove photo',
     editNotes: 'Edit notes',
     noNotes: 'No notes',
+    changePriority: 'Change priority',
+    deleteRecording: 'Delete recording',
   },
 
   // Priority

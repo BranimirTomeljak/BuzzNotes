@@ -122,16 +122,16 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Tabs: pill-style with `primaryTint` active background, `primaryDark` (#8B6914) active text
 - Inputs: surface-colored (#F0EBE0) with no border
 - Dialogs: borderRadius 24
-- FABs: 56x56, bottom: 100, `fab` color (#D4A530)
+- FAB: single record mic, 56x56, bottom: 100, `fab` color (#D4A530)
 - Tab bar: white, pill-style highlighting, paddingBottom 24 (clears gesture bar)
 
 ### Voice Note Cards
 - **Unsolved**: full card with priority-based background tint (HIGH: #FFECEC, MEDIUM: #FFF8E0, LOW: #ECF2FF)
   - Shows notes preview (2-line truncated) if recording has notes
   - Shows photo thumbnail row (up to 4 + "+N" badge) if recording has photos
-  - Tapping card navigates to recording detail screen (`/recording/[id]`)
+  - Tap card to navigate to recording detail screen (`/recording/[id]`)
 - **Solved**: compact card, surface background, greyed-out audio player (muted prop)
-- **Checkbox toggle**: top-right of both card types, same position
+- **Checkbox toggle**: top-right of both card types, always visible
   - Unsolved: `checkmark-circle-outline` (light grey) — tap to mark solved
   - Solved: `checkmark-circle` (green) — tap to unresolve
 - Solved items sorted to bottom of lists, separated by a "SOLVED" divider line
@@ -163,7 +163,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Cards accept optional `style` prop for multi-column `flex: 1` override
 - Solved divider disabled in multi-column mode (would only span one cell)
 - Photo sizes computed dynamically from screen width + column count (not module-level constants)
-- FAB cluster positioned relative to content boundary on tablet (not screen edge)
+- FAB positioned relative to content boundary on tablet (not screen edge)
 
 ## Shared Components & Hooks
 
@@ -174,6 +174,9 @@ Recording list scenes, editable name rows, tab bar config, and delete confirmati
 - **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
 - **`useDetailTabBar`** (`src/hooks/`) — Shared pill-style tab bar for detail screens. Returns `{ renderTabBar }`. No arguments needed.
 - **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
+- **`FloatingActions`** (`src/components/`) — Solo record mic FAB. Shows alert when no locations exist. Positioned at bottom-right, responsive on tablet.
+- **Add Location**: dashed footer card in Locations tab FlatList, opens add-location dialog
+- **Add Beehive**: dashed footer card in location detail beehive FlatList, opens add-beehive dialog
 
 ## Architecture: Offline-First with Local User ID
 

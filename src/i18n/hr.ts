@@ -89,6 +89,8 @@ export default {
     removePhoto: 'Ukloni fotografiju',
     editNotes: 'Uredi bilješke',
     noNotes: 'Nema bilješki',
+    changePriority: 'Promijeni prioritet',
+    deleteRecording: 'Obriši snimku',
   },
 
   // Priority

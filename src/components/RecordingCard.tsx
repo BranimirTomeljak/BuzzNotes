@@ -181,28 +181,22 @@ export default function RecordingCard({
         </View>
       )}
 
-      {/* Photo thumbnails */}
-      {hasPhotos && (
-        <View style={styles.photoRow}>
-          {recording.photos!.slice(0, 4).map((uri, i) => (
-            <Image key={i} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
-          ))}
-          {recording.photos!.length > 4 && (
-            <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>
-              <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
-            </View>
-          )}
-        </View>
+      {recording.lastListenedAt && (
+        <Text style={styles.lastListened}>
+          {t('recordings.lastListened')}: {formatDateTime(recording.lastListenedAt)}
+        </Text>
       )}
 
       <View style={styles.footer}>
-        <View style={styles.footerInfo}>
-          {recording.lastListenedAt && (
-            <Text style={styles.lastListened}>
-              {t('recordings.lastListened')}: {formatDateTime(recording.lastListenedAt)}
-            </Text>
-          )}
-        </View>
+        {hasPhotos && recording.photos!.slice(0, 4).map((uri, i) => (
+          <Image key={i} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
+        ))}
+        {hasPhotos && recording.photos!.length > 4 && (
+          <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>
+            <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
+          </View>
+        )}
+        <View style={{ flex: 1 }} />
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.7}>
           <Ionicons name="trash-outline" size={20} color={colors.danger} />
         </TouchableOpacity>
@@ -266,11 +260,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  footerInfo: {
-    flex: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   lastListened: {
     ...typography.caption,
@@ -296,10 +287,6 @@ const styles = StyleSheet.create({
     ...typography.bodySmall,
     color: colors.textSecondary,
     flex: 1,
-  },
-  photoRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
   },
   photoThumb: {
     width: 48,

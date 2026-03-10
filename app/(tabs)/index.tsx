@@ -7,6 +7,9 @@ import {
   Text,
   StyleSheet,
   useWindowDimensions,
+  Modal,
+  TextInput,
+  Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +21,8 @@ import LocationCard from '../../src/components/LocationCard';
 import RecordingListScene from '../../src/components/RecordingListScene';
 import EmptyState from '../../src/components/EmptyState';
 import FloatingActions from '../../src/components/FloatingActions';
-import { colors, spacing } from '../../src/theme';
+import Toast from 'react-native-toast-message';
+import { colors, spacing, borderRadius, typography } from '../../src/theme';
 import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
 import { Location } from '../../src/models/types';
 import { useResponsive } from '../../src/hooks/useResponsive';
@@ -28,8 +32,8 @@ type Route = { key: string; title: string; icon: React.ComponentProps<typeof Ion
 function LocationsScene() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { locations, beehives, recordings, syncing, refreshData } = useData();
-  const { columns } = useResponsive();
+  const { locations, beehives, recordings, syncing, refreshData, addLocation } = useData();
+  const { columns, isTablet } = useResponsive();
 
   const cardStyle = useMemo(
     () => (columns > 1 ? ({ flex: 1, marginHorizontal: 0 } as const) : undefined),
@@ -65,31 +69,98 @@ function LocationsScene() {
     [getBeehiveCount, getRecordingCount, router, cardStyle],
   );
 
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newLocationName, setNewLocationName] = useState('');
+
+  const handleAddLocation = useCallback(async () => {
+    if (!newLocationName.trim()) return;
+    await addLocation(newLocationName.trim());
+    setNewLocationName('');
+    setShowAddDialog(false);
+    Toast.show({ type: 'success', text1: t('common.success'), visibilityTime: 1500 });
+  }, [newLocationName, addLocation, t]);
+
   return (
-    <FlatList
-      key={columns}
-      data={sortedLocations}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      numColumns={columns}
-      columnWrapperStyle={columns > 1 ? sceneStyles.columnWrapper : undefined}
-      contentContainerStyle={sceneStyles.list}
-      refreshControl={
-        <RefreshControl
-          refreshing={syncing}
-          onRefresh={refreshData}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-        />
-      }
-      ListEmptyComponent={
-        <EmptyState
-          icon={<Ionicons name="location-outline" size={40} color={colors.textLight} />}
-          title={t('locations.empty')}
-          description={t('locations.emptyDesc')}
-        />
-      }
-    />
+    <>
+      <FlatList
+        key={columns}
+        data={sortedLocations}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        numColumns={columns}
+        columnWrapperStyle={columns > 1 ? sceneStyles.columnWrapper : undefined}
+        contentContainerStyle={sceneStyles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={syncing}
+            onRefresh={refreshData}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+        ListEmptyComponent={
+          <EmptyState
+            icon={<Ionicons name="location-outline" size={40} color={colors.textLight} />}
+            title={t('locations.empty')}
+            description={t('locations.emptyDesc')}
+          />
+        }
+        ListFooterComponent={
+          <TouchableOpacity
+            style={sceneStyles.dashedCard}
+            onPress={() => setShowAddDialog(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={22} color={colors.primary} />
+            <Text style={sceneStyles.dashedCardText}>{t('locations.add')}</Text>
+          </TouchableOpacity>
+        }
+      />
+
+      <Modal visible={showAddDialog} transparent animationType="fade">
+        <Pressable
+          style={sceneStyles.overlay}
+          onPress={() => {
+            setShowAddDialog(false);
+            setNewLocationName('');
+          }}
+        >
+          <Pressable style={[sceneStyles.dialog, isTablet && { maxWidth: 500 }]} onPress={() => {}}>
+            <Text style={sceneStyles.dialogTitle}>{t('locations.add')}</Text>
+            <TextInput
+              style={sceneStyles.dialogInput}
+              placeholder={t('locations.namePlaceholder')}
+              placeholderTextColor={colors.textLight}
+              value={newLocationName}
+              onChangeText={setNewLocationName}
+              autoFocus
+              onSubmitEditing={handleAddLocation}
+            />
+            <View style={sceneStyles.dialogActions}>
+              <TouchableOpacity
+                style={sceneStyles.cancelButton}
+                onPress={() => {
+                  setShowAddDialog(false);
+                  setNewLocationName('');
+                }}
+              >
+                <Text style={sceneStyles.cancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  sceneStyles.saveButton,
+                  !newLocationName.trim() && sceneStyles.saveButtonDisabled,
+                ]}
+                onPress={handleAddLocation}
+                disabled={!newLocationName.trim()}
+              >
+                <Text style={sceneStyles.saveText}>{t('common.create')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
@@ -153,6 +224,79 @@ const sceneStyles = StyleSheet.create({
   columnWrapper: {
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
+  },
+  dashedCard: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.sm,
+    minHeight: 80,
+    paddingVertical: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  dashedCardText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  dialog: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+  },
+  dialogTitle: {
+    ...typography.h2,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  dialogInput: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    fontSize: 18,
+    color: colors.text,
+    marginBottom: spacing.lg,
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.md,
+  },
+  cancelButton: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+  },
+  cancelText: {
+    ...typography.button,
+    color: colors.textSecondary,
+  },
+  saveButton: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primary,
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  saveText: {
+    ...typography.button,
+    color: colors.white,
   },
 });
 

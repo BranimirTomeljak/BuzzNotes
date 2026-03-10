@@ -86,16 +86,7 @@ function BeehivesScene({
   return (
     <View style={{ flex: 1 }}>
       <View style={sceneStyles.beehiveToolbar}>
-        <View style={{ flex: 1 }}>
-          <SearchBar value={search} onChangeText={setSearch} />
-        </View>
-        <TouchableOpacity
-          style={sceneStyles.addBeehiveButton}
-          onPress={() => setShowAddBeehive(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={sceneStyles.addBeehiveText}>+ {t('beehives.add')}</Text>
-        </TouchableOpacity>
+        <SearchBar value={search} onChangeText={setSearch} />
       </View>
       <FlatList
         key={columns}
@@ -113,6 +104,16 @@ function BeehivesScene({
             title={t('beehives.empty')}
             description={t('beehives.emptyDesc')}
           />
+        }
+        ListFooterComponent={
+          <TouchableOpacity
+            style={sceneStyles.dashedCard}
+            onPress={() => setShowAddBeehive(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={22} color={colors.primary} />
+            <Text style={sceneStyles.dashedCardText}>{t('beehives.add')}</Text>
+          </TouchableOpacity>
         }
       />
     </View>
@@ -171,21 +172,26 @@ const sceneStyles = StyleSheet.create({
     gap: spacing.md,
   },
   beehiveToolbar: {
+    paddingVertical: spacing.sm,
+  },
+  dashedCard: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    borderRadius: borderRadius.xl,
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.sm,
+    minHeight: 80,
+    paddingVertical: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: spacing.lg,
-    gap: spacing.sm,
+    justifyContent: 'center',
+    gap: spacing.xs,
   },
-  addBeehiveButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.primary,
-  },
-  addBeehiveText: {
-    color: colors.white,
-    fontWeight: '600',
+  dashedCardText: {
+    color: colors.primary,
     fontSize: 14,
+    fontWeight: '600',
   },
 });
 
