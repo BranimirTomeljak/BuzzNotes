@@ -6,6 +6,7 @@ import RecordingCard from './RecordingCard';
 import EmptyState from './EmptyState';
 import { Recording, Priority } from '../models/types';
 import { spacing } from '../theme';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface RecordingListSceneProps {
   recordings: Recording[];
@@ -26,6 +27,12 @@ export default function RecordingListScene({
 }: RecordingListSceneProps) {
   const { t } = useTranslation();
   const { updateRecording, deleteRecording } = useData();
+  const { columns } = useResponsive();
+
+  const cardStyle = useMemo(
+    () => (columns > 1 ? ({ flex: 1, marginHorizontal: 0 } as const) : undefined),
+    [columns],
+  );
 
   const sorted = useMemo(() => sortFn(recordings), [recordings, sortFn]);
 
@@ -37,18 +44,21 @@ export default function RecordingListScene({
         recording={item}
         beehiveName={getBeehiveName?.(item.beehiveId)}
         locationName={getLocationName?.(item.locationId)}
-        showSolvedDivider={item.id === firstSolvedId}
+        showSolvedDivider={columns === 1 && item.id === firstSolvedId}
         onUpdatePriority={(priority: Priority) => updateRecording(item.id, { priority })}
         onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
         onDelete={() => deleteRecording(item.id)}
         onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
         onPress={onPressRecording ? () => onPressRecording(item.id) : undefined}
+        style={cardStyle}
       />
     ),
     [
       getBeehiveName,
       getLocationName,
       firstSolvedId,
+      columns,
+      cardStyle,
       updateRecording,
       deleteRecording,
       onPressRecording,
@@ -57,9 +67,12 @@ export default function RecordingListScene({
 
   return (
     <FlatList
+      key={columns}
       data={sorted}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
+      numColumns={columns}
+      columnWrapperStyle={columns > 1 ? styles.columnWrapper : undefined}
       contentContainerStyle={styles.list}
       ListEmptyComponent={
         <EmptyState
@@ -76,5 +89,9 @@ const styles = StyleSheet.create({
   list: {
     paddingVertical: spacing.sm,
     paddingBottom: 100,
+  },
+  columnWrapper: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
 });

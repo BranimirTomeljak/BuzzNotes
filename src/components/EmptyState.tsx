@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, typography } from '../theme';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface EmptyStateProps {
   icon: React.ReactNode;
@@ -9,9 +10,11 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ icon, title, description }: EmptyStateProps) {
+  const { scale } = useResponsive();
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconCircle}>{icon}</View>
+      <View style={[styles.iconCircle, { width: 96 * scale, height: 96 * scale, borderRadius: 48 * scale }]}>{icon}</View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
     </View>
@@ -27,9 +30,6 @@ const styles = StyleSheet.create({
     minHeight: 300,
   },
   iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',

@@ -9,6 +9,7 @@ import AudioPlayer from './AudioPlayer';
 import { useTranslation } from 'react-i18next';
 import { confirmDelete } from '../utils/confirmDelete';
 import { hapticLight, hapticSuccess, hapticWarning } from '../utils/haptics';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface RecordingCardProps {
   recording: Recording;
@@ -20,6 +21,7 @@ interface RecordingCardProps {
   onPlay: () => void;
   onPress?: () => void;
   showSolvedDivider?: boolean;
+  style?: import('react-native').ViewStyle;
 }
 
 const PRIORITY_CYCLE: Priority[] = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
@@ -34,8 +36,10 @@ export default function RecordingCard({
   onPlay,
   onPress,
   showSolvedDivider,
+  style,
 }: RecordingCardProps) {
   const { t } = useTranslation();
+  const { scale } = useResponsive();
 
   const cyclePriority = useCallback(() => {
     hapticLight();
@@ -67,13 +71,13 @@ export default function RecordingCard({
     return (
       <>
         {showSolvedDivider && (
-          <View style={styles.dividerContainer}>
+          <View style={[styles.dividerContainer, style && { marginHorizontal: 0 }]}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>{t('recordings.solved')}</Text>
             <View style={styles.dividerLine} />
           </View>
         )}
-        <View style={styles.cardSolved}>
+        <View style={[styles.cardSolved, style]}>
           <View style={styles.solvedHeader}>
             <View style={styles.solvedRow}>
               <Text style={styles.solvedDate}>{formatDateTime(recording.createdAt)}</Text>
@@ -125,10 +129,10 @@ export default function RecordingCard({
   const hasPhotos = !!recording.photos?.length;
 
   const cardContent = (
-    <View style={[styles.card, { backgroundColor: priorityTint }]}>
+    <View style={[styles.card, { backgroundColor: priorityTint }, style]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.date}>{formatDateTime(recording.createdAt)}</Text>
+          <Text style={[styles.date, { fontSize: 18 * scale }]}>{formatDateTime(recording.createdAt)}</Text>
           {beehiveName && (
             <View style={styles.metaRow}>
               <MaterialCommunityIcons
@@ -181,10 +185,10 @@ export default function RecordingCard({
       {hasPhotos && (
         <View style={styles.photoRow}>
           {recording.photos!.slice(0, 4).map((uri, i) => (
-            <Image key={i} source={{ uri }} style={styles.photoThumb} />
+            <Image key={i} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
           ))}
           {recording.photos!.length > 4 && (
-            <View style={styles.photoMore}>
+            <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>
               <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
             </View>
           )}

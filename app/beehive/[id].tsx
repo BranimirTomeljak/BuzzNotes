@@ -17,6 +17,7 @@ import EditableNameRow from '../../src/components/EditableNameRow';
 import { confirmDelete } from '../../src/utils/confirmDelete';
 import { hapticWarning } from '../../src/utils/haptics';
 import { useDetailTabBar } from '../../src/hooks/useDetailTabBar';
+import { useResponsive } from '../../src/hooks/useResponsive';
 import { colors, spacing, borderRadius, typography } from '../../src/theme';
 import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
 
@@ -60,6 +61,7 @@ export default function BeehiveDetail() {
   const { t } = useTranslation();
   const layout = useWindowDimensions();
   const { getBeehiveById, getLocationById, updateBeehive, deleteBeehive, locations } = useData();
+  const { contentMaxWidth } = useResponsive();
 
   const beehive = getBeehiveById(id);
   const location = beehive ? getLocationById(beehive.locationId) : undefined;
@@ -139,68 +141,70 @@ export default function BeehiveDetail() {
         }}
       />
 
-      <EditableNameRow
-        name={beehive.name}
-        icon="archive-outline"
-        onSave={(newName) => updateBeehive(beehive.id, { name: newName })}
-        onDelete={handleDelete}
-      />
+      <View style={contentMaxWidth ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const } : undefined}>
+        <EditableNameRow
+          name={beehive.name}
+          icon="archive-outline"
+          onSave={(newName) => updateBeehive(beehive.id, { name: newName })}
+          onDelete={handleDelete}
+        />
 
-      {/* Location */}
-      <View style={styles.locationRow}>
-        <Text style={styles.locationLabel}>{t('beehives.location')}: </Text>
-        {changingLocation ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.locationScroll}
-          >
-            {locations.map((loc) => (
-              <TouchableOpacity
-                key={loc.id}
-                style={[
-                  styles.locationChip,
-                  loc.id === beehive.locationId && styles.locationChipActive,
-                ]}
-                onPress={() => handleChangeLocation(loc.id)}
-              >
-                <Text
+        {/* Location */}
+        <View style={styles.locationRow}>
+          <Text style={styles.locationLabel}>{t('beehives.location')}: </Text>
+          {changingLocation ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.locationScroll}
+            >
+              {locations.map((loc) => (
+                <TouchableOpacity
+                  key={loc.id}
                   style={[
-                    styles.locationChipText,
-                    loc.id === beehive.locationId && styles.locationChipTextActive,
+                    styles.locationChip,
+                    loc.id === beehive.locationId && styles.locationChipActive,
                   ]}
+                  onPress={() => handleChangeLocation(loc.id)}
                 >
-                  {loc.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        ) : (
-          <TouchableOpacity
-            onPress={() => setChangingLocation(true)}
-            style={styles.locationValueRow}
-          >
-            <Ionicons name="location-outline" size={16} color={colors.primary} />
-            <Text style={styles.locationValue}>{location?.name || '?'}</Text>
-            <Ionicons name="create-outline" size={14} color={colors.textLight} />
-          </TouchableOpacity>
-        )}
-      </View>
+                  <Text
+                    style={[
+                      styles.locationChipText,
+                      loc.id === beehive.locationId && styles.locationChipTextActive,
+                    ]}
+                  >
+                    {loc.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setChangingLocation(true)}
+              style={styles.locationValueRow}
+            >
+              <Ionicons name="location-outline" size={16} color={colors.primary} />
+              <Text style={styles.locationValue}>{location?.name || '?'}</Text>
+              <Ionicons name="create-outline" size={14} color={colors.textLight} />
+            </TouchableOpacity>
+          )}
+        </View>
 
-      {/* Record button */}
-      <TouchableOpacity
-        style={styles.recordButton}
-        onPress={() =>
-          router.push({
-            pathname: '/record',
-            params: { beehiveId: beehive.id, locationId: beehive.locationId },
-          })
-        }
-        activeOpacity={0.7}
-      >
-        <Ionicons name="mic" size={20} color={colors.white} style={styles.recordIcon} />
-        <Text style={styles.recordButtonText}>{t('recordings.add')}</Text>
-      </TouchableOpacity>
+        {/* Record button */}
+        <TouchableOpacity
+          style={styles.recordButton}
+          onPress={() =>
+            router.push({
+              pathname: '/record',
+              params: { beehiveId: beehive.id, locationId: beehive.locationId },
+            })
+          }
+          activeOpacity={0.7}
+        >
+          <Ionicons name="mic" size={20} color={colors.white} style={styles.recordIcon} />
+          <Text style={styles.recordButtonText}>{t('recordings.add')}</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Swipeable Tabs */}
       <TabView

@@ -1,15 +1,17 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Beehive } from '../models/types';
 import { colors, spacing, borderRadius, typography, shadows } from '../theme';
 import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface BeehiveCardProps {
   beehive: Beehive;
   recordingCount: number;
   onPress: () => void;
   onRecord?: () => void;
+  style?: ViewStyle;
 }
 
 export default function BeehiveCard({
@@ -17,19 +19,21 @@ export default function BeehiveCard({
   recordingCount,
   onPress,
   onRecord,
+  style,
 }: BeehiveCardProps) {
   const { t } = useTranslation();
+  const { scale } = useResponsive();
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.iconContainer}>
         <MaterialCommunityIcons name="archive-outline" size={24} color={colors.primary} />
       </View>
       <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>
+        <Text style={[styles.name, { fontSize: 20 * scale }]} numberOfLines={1}>
           {beehive.name}
         </Text>
-        <Text style={styles.count}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
+        <Text style={[styles.count, { fontSize: 16 * scale }]}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
       </View>
       {onRecord && (
         <TouchableOpacity style={styles.recordButton} onPress={onRecord} activeOpacity={0.7}>

@@ -21,6 +21,7 @@ import FloatingActions from '../../src/components/FloatingActions';
 import { colors, spacing } from '../../src/theme';
 import { sortByRecent, sortByPriority } from '../../src/utils/sorting';
 import { Location } from '../../src/models/types';
+import { useResponsive } from '../../src/hooks/useResponsive';
 
 type Route = { key: string; title: string; icon: React.ComponentProps<typeof Ionicons>['name'] };
 
@@ -28,6 +29,12 @@ function LocationsScene() {
   const { t } = useTranslation();
   const router = useRouter();
   const { locations, beehives, recordings, syncing, refreshData } = useData();
+  const { columns } = useResponsive();
+
+  const cardStyle = useMemo(
+    () => (columns > 1 ? ({ flex: 1, marginHorizontal: 0 } as const) : undefined),
+    [columns],
+  );
 
   const sortedLocations = useMemo(
     () => [...locations].sort((a, b) => a.createdAt - b.createdAt),
@@ -52,16 +59,20 @@ function LocationsScene() {
         recordingCount={getRecordingCount(item.id)}
         index={index}
         onPress={() => router.push(`/location/${item.id}`)}
+        style={cardStyle}
       />
     ),
-    [getBeehiveCount, getRecordingCount, router],
+    [getBeehiveCount, getRecordingCount, router, cardStyle],
   );
 
   return (
     <FlatList
+      key={columns}
       data={sortedLocations}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
+      numColumns={columns}
+      columnWrapperStyle={columns > 1 ? sceneStyles.columnWrapper : undefined}
       contentContainerStyle={sceneStyles.list}
       refreshControl={
         <RefreshControl
@@ -138,6 +149,10 @@ const sceneStyles = StyleSheet.create({
   list: {
     paddingVertical: spacing.sm,
     paddingBottom: 100,
+  },
+  columnWrapper: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
 });
 

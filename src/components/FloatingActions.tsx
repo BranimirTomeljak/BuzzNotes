@@ -8,6 +8,7 @@ import {
   TextInput,
   Pressable,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import { colors, spacing, borderRadius, typography, shadows } from '../theme';
 import { useData } from '../contexts/DataContext';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
+import { useResponsive } from '../hooks/useResponsive';
 
 type DialogType = 'location' | 'beehive' | null;
 
@@ -22,6 +24,15 @@ export default function FloatingActions() {
   const router = useRouter();
   const { t } = useTranslation();
   const { locations, addLocation, addBeehive } = useData();
+  const { isTablet, contentMaxWidth } = useResponsive();
+  const { width: screenWidth } = useWindowDimensions();
+
+  // Calculate FAB right offset — on tablet, align with content boundary
+  const fabRight =
+    isTablet && contentMaxWidth
+      ? (screenWidth - contentMaxWidth) / 2 + spacing.lg
+      : spacing.lg;
+
   const [dialog, setDialog] = useState<DialogType>(null);
   const [name, setName] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
@@ -65,7 +76,7 @@ export default function FloatingActions() {
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, { right: fabRight }]}>
         <TouchableOpacity
           style={styles.fab}
           onPress={() => setDialog('location')}
@@ -88,7 +99,7 @@ export default function FloatingActions() {
       {/* Add Location Dialog */}
       <Modal visible={dialog === 'location'} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={closeDialog}>
-          <Pressable style={styles.dialog} onPress={() => {}}>
+          <Pressable style={[styles.dialog, isTablet && { maxWidth: 500 }]} onPress={() => {}}>
             <Text style={styles.dialogTitle}>{t('locations.add')}</Text>
             <TextInput
               style={styles.input}
@@ -118,7 +129,7 @@ export default function FloatingActions() {
       {/* Add Beehive Dialog */}
       <Modal visible={dialog === 'beehive'} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={closeDialog}>
-          <Pressable style={styles.dialog} onPress={() => {}}>
+          <Pressable style={[styles.dialog, isTablet && { maxWidth: 500 }]} onPress={() => {}}>
             <Text style={styles.dialogTitle}>{t('beehives.add')}</Text>
 
             <Text style={styles.fieldLabel}>{t('beehives.selectLocation')}</Text>
@@ -186,7 +197,6 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 100,
-    right: spacing.lg,
     gap: spacing.md,
     alignItems: 'center',
   },

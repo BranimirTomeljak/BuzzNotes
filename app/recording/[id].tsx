@@ -10,7 +10,7 @@ import {
   Pressable,
   FlatList,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,13 +22,12 @@ import AudioPlayer from '../../src/components/AudioPlayer';
 import PriorityBadge from '../../src/components/PriorityBadge';
 import { confirmDelete } from '../../src/utils/confirmDelete';
 import { hapticLight, hapticSuccess, hapticWarning } from '../../src/utils/haptics';
+import { useResponsive } from '../../src/hooks/useResponsive';
 import { colors, spacing, borderRadius, typography, shadows } from '../../src/theme';
 import { formatDateTime, formatDuration } from '../../src/utils/formatting';
 import { Priority } from '../../src/models/types';
 
 const PRIORITY_CYCLE: Priority[] = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const PHOTO_SIZE = (SCREEN_WIDTH - spacing.xl * 2 - spacing.sm) / 2;
 
 export default function RecordingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -48,6 +47,12 @@ export default function RecordingDetail() {
   notesRef.current = notesText;
 
   const savedNotesRef = useRef(recording?.notes || '');
+
+  const { contentMaxWidth, photoColumns, scale, isTablet } = useResponsive();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
+  const contentWidth = contentMaxWidth ? Math.min(screenWidth, contentMaxWidth) : screenWidth;
+  const photoSize = (contentWidth - spacing.xl * 2 - spacing.sm * (photoColumns - 1)) / photoColumns;
 
   useEffect(() => {
     return () => {
@@ -165,7 +170,10 @@ export default function RecordingDetail() {
         }}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={[
+        styles.content,
+        contentMaxWidth != null && { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const },
+      ]}>
         {/* Meta info */}
         <View style={styles.metaCard}>
           <View style={styles.metaRow}>
@@ -222,10 +230,10 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={18} color={colors.text} />
-            <Text style={styles.sectionTitle}>{t('recordings.notes')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 18 * scale }]}>{t('recordings.notes')}</Text>
           </View>
           <TextInput
-            style={styles.notesInput}
+            style={[styles.notesInput, { fontSize: 16 * scale, minHeight: isTablet ? 150 : 120 }]}
             value={notesText}
             onChangeText={setNotesText}
             onBlur={handleNotesBlur}
@@ -240,7 +248,7 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="images-outline" size={18} color={colors.text} />
-            <Text style={styles.sectionTitle}>{t('recordings.photos')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 18 * scale }]}>{t('recordings.photos')}</Text>
           </View>
 
           {/* Add photo buttons */}
@@ -261,7 +269,7 @@ export default function RecordingDetail() {
               {recording.photos!.map((uri, index) => (
                 <View key={uri + index} style={styles.photoContainer}>
                   <TouchableOpacity activeOpacity={0.8} onPress={() => setViewingPhotoIndex(index)}>
-                    <Image source={{ uri }} style={styles.photo} />
+                    <Image source={{ uri }} style={{ width: photoSize, height: photoSize, borderRadius: borderRadius.md }} />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.photoRemoveBtn}
@@ -295,23 +303,23 @@ export default function RecordingDetail() {
                 showsHorizontalScrollIndicator={false}
                 initialScrollIndex={viewingPhotoIndex}
                 getItemLayout={(_, index) => ({
-                  length: SCREEN_WIDTH,
-                  offset: SCREEN_WIDTH * index,
+                  length: screenWidth,
+                  offset: screenWidth * index,
                   index,
                 })}
                 onMomentumScrollEnd={(e) => {
-                  const idx = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
                   setViewingPhotoIndex(idx);
                 }}
                 keyExtractor={(item, i) => item + i}
                 renderItem={({ item }) => (
                   <Pressable
-                    style={styles.photoViewerPage}
+                    style={[styles.photoViewerPage, { width: screenWidth }]}
                     onPress={() => setViewingPhotoIndex(null)}
                   >
                     <Image
                       source={{ uri: item }}
-                      style={styles.photoViewerImage}
+                      style={{ width: screenWidth, height: screenHeight * 0.8 }}
                       resizeMode="contain"
                     />
                   </Pressable>
@@ -451,11 +459,6 @@ const styles = StyleSheet.create({
   photoContainer: {
     position: 'relative',
   },
-  photo: {
-    width: PHOTO_SIZE,
-    height: PHOTO_SIZE,
-    borderRadius: borderRadius.md,
-  },
   photoRemoveBtn: {
     position: 'absolute',
     top: -8,
@@ -476,13 +479,8 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   photoViewerPage: {
-    width: SCREEN_WIDTH,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  photoViewerImage: {
-    width: SCREEN_WIDTH,
-    height: Dimensions.get('window').height * 0.8,
   },
   photoCounter: {
     position: 'absolute',

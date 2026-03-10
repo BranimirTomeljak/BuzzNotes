@@ -92,7 +92,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/models/` - TypeScript interfaces and enums
 - `src/theme/` - Design system (colors, spacing, typography, shadows)
 - `src/i18n/` - Internationalization files (hr, en)
-- `src/hooks/` - Custom hooks (useDetailTabBar)
+- `src/hooks/` - Custom hooks (useDetailTabBar, useResponsive)
 - `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
 - `src/__tests__/` - Jest unit tests
 - `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
@@ -153,6 +153,17 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `muted` prop: grey play button, grey slider, lighter time text (used on solved cards)
 - Slider uses `pageX` + `measureInWindow` for reliable drag (not `locationX`)
 - Slider accepts optional `tintColor` prop to override fill/thumb color
+
+### Responsive Design (Phone + Tablet)
+- Breakpoint: 600px (phone < 600, tablet >= 600)
+- `useResponsive()` hook (`src/hooks/useResponsive.ts`) — single source of responsive values
+- Phone layout is unchanged — all responsive logic is additive
+- Tablet (portrait ~10"): 2-column lists, 3-column photo grid, 800px max content width, 1.15x font scale
+- FlatList `key={columns}` forces remount when columns change (React Native requirement)
+- Cards accept optional `style` prop for multi-column `flex: 1` override
+- Solved divider disabled in multi-column mode (would only span one cell)
+- Photo sizes computed dynamically from screen width + column count (not module-level constants)
+- FAB cluster positioned relative to content boundary on tablet (not screen edge)
 
 ## Shared Components & Hooks
 

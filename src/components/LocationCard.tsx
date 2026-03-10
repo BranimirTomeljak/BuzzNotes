@@ -1,9 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Location } from '../models/types';
 import { colors, spacing, borderRadius, shadows } from '../theme';
 import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../hooks/useResponsive';
 
 const ACCENT_COLORS = ['#B8860B', '#5C9CE6', '#EF5350', '#4CAF50', '#9C6ADE'];
 
@@ -13,6 +14,7 @@ interface LocationCardProps {
   recordingCount: number;
   index: number;
   onPress: () => void;
+  style?: ViewStyle;
 }
 
 const HEX_POSITIONS = [
@@ -59,19 +61,21 @@ export default function LocationCard({
   recordingCount,
   index,
   onPress,
+  style,
 }: LocationCardProps) {
   const { t } = useTranslation();
+  const { isTablet, scale } = useResponsive();
   const accentColor = ACCENT_COLORS[index % ACCENT_COLORS.length];
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.card, isTablet && { minHeight: 160 }, style]} onPress={onPress} activeOpacity={0.7}>
       <View style={[styles.accent, { backgroundColor: accentColor }]} />
       <View style={styles.body}>
         <HexPattern color={accentColor} />
         <View style={styles.content}>
           <View style={styles.header}>
             <Ionicons name="location" size={24} color={accentColor} />
-            <Text style={styles.name} numberOfLines={1}>
+            <Text style={[styles.name, { fontSize: 22 * scale }]} numberOfLines={1}>
               {location.name}
             </Text>
             <Ionicons name="chevron-forward" size={22} color={colors.textLight} />
@@ -83,14 +87,14 @@ export default function LocationCard({
                 size={20}
                 color={colors.textSecondary}
               />
-              <Text style={styles.statValue}>{beehiveCount}</Text>
-              <Text style={styles.statLabel}>{t('beehives.title')}</Text>
+              <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{beehiveCount}</Text>
+              <Text style={[styles.statLabel, { fontSize: 15 * scale }]}>{t('beehives.title')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
-              <Text style={styles.statValue}>{recordingCount}</Text>
-              <Text style={styles.statLabel}>{t('recordings.title')}</Text>
+              <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{recordingCount}</Text>
+              <Text style={[styles.statLabel, { fontSize: 15 * scale }]}>{t('recordings.title')}</Text>
             </View>
           </View>
         </View>

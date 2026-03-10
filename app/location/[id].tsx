@@ -26,6 +26,7 @@ import { naturalSort, sortByRecent, sortByPriority } from '../../src/utils/sorti
 import { confirmDelete } from '../../src/utils/confirmDelete';
 import { hapticWarning } from '../../src/utils/haptics';
 import { useDetailTabBar } from '../../src/hooks/useDetailTabBar';
+import { useResponsive } from '../../src/hooks/useResponsive';
 import { Beehive } from '../../src/models/types';
 
 type Route = { key: string; title: string };
@@ -60,6 +61,13 @@ function BeehivesScene({
     [locationRecordings],
   );
 
+  const { columns } = useResponsive();
+
+  const cardStyle = useMemo(
+    () => (columns > 1 ? ({ flex: 1, marginHorizontal: 0 } as const) : undefined),
+    [columns],
+  );
+
   const renderBeehive = useCallback(
     ({ item }: { item: Beehive }) => (
       <BeehiveCard
@@ -69,9 +77,10 @@ function BeehivesScene({
         onRecord={() =>
           router.push({ pathname: '/record', params: { beehiveId: item.id, locationId } })
         }
+        style={cardStyle}
       />
     ),
-    [recordingsForBeehive, router, locationId],
+    [recordingsForBeehive, router, locationId, cardStyle],
   );
 
   return (
@@ -89,9 +98,12 @@ function BeehivesScene({
         </TouchableOpacity>
       </View>
       <FlatList
+        key={columns}
         data={filteredBeehives}
         keyExtractor={(item) => item.id}
         renderItem={renderBeehive}
+        numColumns={columns}
+        columnWrapperStyle={columns > 1 ? sceneStyles.columnWrapper : undefined}
         contentContainerStyle={sceneStyles.list}
         ListEmptyComponent={
           <EmptyState
@@ -154,6 +166,10 @@ const sceneStyles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingBottom: 100,
   },
+  columnWrapper: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
   beehiveToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,6 +195,8 @@ export default function LocationDetail() {
   const { t } = useTranslation();
   const layout = useWindowDimensions();
   const { getLocationById, updateLocation, deleteLocation, addBeehive } = useData();
+
+  const { isTablet } = useResponsive();
 
   const location = getLocationById(id);
 
@@ -293,7 +311,7 @@ export default function LocationDetail() {
             setNewBeehiveName('');
           }}
         >
-          <Pressable style={styles.dialog} onPress={() => {}}>
+          <Pressable style={[styles.dialog, isTablet && { maxWidth: 500 }]} onPress={() => {}}>
             <Text style={styles.dialogTitle}>{t('beehives.add')}</Text>
             <TextInput
               style={styles.dialogInput}
