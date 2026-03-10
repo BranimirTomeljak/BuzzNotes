@@ -26,6 +26,12 @@ interface RecordingCardProps {
 
 const PRIORITY_CYCLE: Priority[] = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
 
+const PRIORITY_TINT: Record<Priority, string> = {
+  [Priority.HIGH]: colors.priorityHighTint,
+  [Priority.MEDIUM]: colors.priorityMediumTint,
+  [Priority.LOW]: colors.priorityLowTint,
+};
+
 export default function RecordingCard({
   recording,
   beehiveName,
@@ -118,12 +124,7 @@ export default function RecordingCard({
   }
 
   // Unsolved: full card
-  const priorityTint =
-    recording.priority === Priority.HIGH
-      ? colors.priorityHighTint
-      : recording.priority === Priority.MEDIUM
-        ? colors.priorityMediumTint
-        : colors.priorityLowTint;
+  const priorityTint = PRIORITY_TINT[recording.priority];
 
   const hasNotes = !!recording.notes?.trim();
   const hasPhotos = !!recording.photos?.length;
@@ -140,10 +141,7 @@ export default function RecordingCard({
                 size={14}
                 color={colors.textSecondary}
               />
-              <Text style={styles.meta}>
-                {beehiveName}
-                {locationName ? '  ' : ''}
-              </Text>
+              <Text style={styles.meta}>{beehiveName}</Text>
               {locationName && (
                 <>
                   <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
@@ -188,15 +186,19 @@ export default function RecordingCard({
       )}
 
       <View style={styles.footer}>
-        {hasPhotos && recording.photos!.slice(0, 4).map((uri, i) => (
-          <Image key={i} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
-        ))}
-        {hasPhotos && recording.photos!.length > 4 && (
-          <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>
-            <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
-          </View>
+        {hasPhotos && (
+          <>
+            {recording.photos!.slice(0, 4).map((uri) => (
+              <Image key={uri} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
+            ))}
+            {recording.photos!.length > 4 && (
+              <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>
+                <Text style={styles.photoMoreText}>+{recording.photos!.length - 4}</Text>
+              </View>
+            )}
+          </>
         )}
-        <View style={{ flex: 1 }} />
+        <View style={styles.spacer} />
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} activeOpacity={0.7}>
           <Ionicons name="trash-outline" size={20} color={colors.danger} />
         </TouchableOpacity>
@@ -262,6 +264,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  spacer: {
+    flex: 1,
   },
   lastListened: {
     ...typography.caption,

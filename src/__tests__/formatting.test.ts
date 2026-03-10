@@ -1,17 +1,4 @@
-import { formatDate, formatDateTime, formatDuration } from '../utils/formatting';
-
-describe('formatDate', () => {
-  it('formats timestamp to dd.mm.yyyy', () => {
-    // 2024-01-15 in UTC
-    const ts = new Date(2024, 0, 15).getTime();
-    expect(formatDate(ts)).toBe('15.01.2024');
-  });
-
-  it('pads single-digit day and month', () => {
-    const ts = new Date(2024, 2, 5).getTime();
-    expect(formatDate(ts)).toBe('05.03.2024');
-  });
-});
+import { formatDateTime, formatDuration } from '../utils/formatting';
 
 describe('formatDateTime', () => {
   it('formats timestamp to dd.mm.yyyy HH:mm', () => {

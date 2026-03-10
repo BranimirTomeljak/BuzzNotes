@@ -28,7 +28,6 @@ export interface Recording {
   userId: string;
   audioUrl: string;
   localPath: string;
-  date: string;
   duration: number;
   priority: Priority;
   solved: boolean;

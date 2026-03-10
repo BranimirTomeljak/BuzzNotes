@@ -18,7 +18,6 @@ import {
 } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
 import { deletePhotos } from '../services/photoStorage';
-import { getCurrentDateString } from '../utils/formatting';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 
@@ -259,7 +258,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         userId: userIdRef.current,
         audioUrl: '',
         localPath: params.localPath,
-        date: getCurrentDateString(),
         duration: params.duration,
         priority: params.priority,
         solved: false,

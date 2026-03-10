@@ -19,32 +19,25 @@ export default {
     googleButton: 'Nastavi s Googleom',
     switchToRegister: 'Nemaš račun? Registriraj se',
     switchToLogin: 'Već imaš račun? Prijavi se',
-    signOut: 'Odjavi se',
     passwordMismatch: 'Lozinke se ne podudaraju',
     fillAllFields: 'Popuni sva polja',
   },
 
   // Locations
   locations: {
-    title: 'Lokacije',
     add: 'Nova lokacija',
-    name: 'Naziv lokacije',
-    namePlaceholder: 'npr. Pčelinjak Zagorje',
-    beehiveCount: '{{count}} košnica',
-    beehiveCount_plural: '{{count}} košnica',
+    namePlaceholder: 'npr. Pčelinjak Kuljani',
     empty: 'Nema lokacija',
     emptyDesc: 'Dodaj svoju prvu lokaciju pčelinjaka',
     delete: 'Obriši lokaciju',
     deleteConfirm:
       'Jesi li siguran/na da želiš obrisati ovu lokaciju i sve njene košnice i snimke?',
-    edit: 'Uredi lokaciju',
   },
 
   // Beehives
   beehives: {
     title: 'Košnice',
     add: 'Nova košnica',
-    name: 'Naziv košnice',
     namePlaceholder: 'npr. Košnica 1',
     recordingCount: '{{count}} snimka',
     recordingCount_plural: '{{count}} snimki',
@@ -52,9 +45,7 @@ export default {
     emptyDesc: 'Dodaj svoju prvu košnicu na ovoj lokaciji',
     delete: 'Obriši košnicu',
     deleteConfirm: 'Jesi li siguran/na da želiš obrisati ovu košnicu i sve njene snimke?',
-    edit: 'Uredi košnicu',
     location: 'Lokacija',
-    selectLocation: 'Odaberi lokaciju',
   },
 
   // Recordings
@@ -67,8 +58,6 @@ export default {
     deleteConfirm: 'Jesi li siguran/na da želiš obrisati ovu snimku?',
     duration: 'Trajanje',
     lastListened: 'Poslušano',
-    never: 'Nikad',
-    recording: 'Snimanje...',
     tapToStop: 'Pritisni za zaustavljanje',
     tapToStart: 'Pritisni za snimanje',
     selectBeehive: 'Odaberi košnicu',
@@ -78,19 +67,12 @@ export default {
     saved: 'Snimka spremljena',
     solved: 'Riješeno',
     unsolved: 'Neriješeno',
-    unresolve: 'Vrati',
     micPermission: 'Potrebna dozvola za mikrofon',
     notes: 'Bilješke',
     notesPlaceholder: 'Dodaj bilješke o pregledu...',
-    addPhoto: 'Dodaj fotografiju',
     takePhoto: 'Slikaj',
     chooseFromGallery: 'Odaberi iz galerije',
     photos: 'Fotografije',
-    removePhoto: 'Ukloni fotografiju',
-    editNotes: 'Uredi bilješke',
-    noNotes: 'Nema bilješki',
-    changePriority: 'Promijeni prioritet',
-    deleteRecording: 'Obriši snimku',
   },
 
   // Priority
@@ -98,7 +80,6 @@ export default {
     high: 'Visok',
     medium: 'Srednji',
     low: 'Nizak',
-    title: 'Prioritet',
   },
 
   // Onboarding
@@ -116,15 +97,11 @@ export default {
     save: 'Spremi',
     cancel: 'Odustani',
     delete: 'Obriši',
-    edit: 'Uredi',
     search: 'Pretraži...',
     loading: 'Učitavanje...',
     error: 'Greška',
     success: 'Uspjeh',
-    confirm: 'Potvrdi',
     create: 'Stvori',
-    noResults: 'Nema rezultata',
-    retry: 'Pokušaj ponovno',
     sync: 'Sinkronizacija',
     syncing: 'Sinkroniziranje...',
     synced: 'Sinkronizirano',

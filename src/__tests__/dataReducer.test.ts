@@ -33,7 +33,6 @@ const rec1: Recording = {
   userId: 'u1',
   audioUrl: '',
   localPath: '/path/rec1.m4a',
-  date: '01.01.2024',
   duration: 60,
   priority: Priority.MEDIUM,
   solved: false,

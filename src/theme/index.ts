@@ -1,6 +1,5 @@
 export const colors = {
   primary: '#B8860B',
-  primaryLight: '#D4A530',
   primaryDark: '#8B6914',
   primaryTint: 'rgba(184,134,11,0.12)',
   background: '#FAF7F0',
@@ -11,7 +10,6 @@ export const colors = {
   textLight: '#A09780',
   border: '#E8E2D6',
   white: '#FFFFFF',
-  black: '#000000',
 
   priorityHigh: '#EF5350',
   priorityHighBg: '#FFEBEE',
@@ -44,11 +42,6 @@ export const spacing = {
 };
 
 export const typography = {
-  h1: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: colors.text,
-  },
   h2: {
     fontSize: 24,
     fontWeight: '600' as const,

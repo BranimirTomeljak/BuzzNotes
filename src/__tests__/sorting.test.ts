@@ -35,7 +35,6 @@ function makeRecording(overrides: Partial<Recording>): Recording {
     userId: 'u1',
     audioUrl: '',
     localPath: '',
-    date: '01.01.2024',
     duration: 60,
     priority: Priority.MEDIUM,
     solved: false,
