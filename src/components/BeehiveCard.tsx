@@ -30,10 +30,10 @@ export default function BeehiveCard({
         <MaterialCommunityIcons name="archive-outline" size={24} color={colors.primary} />
       </View>
       <View style={styles.content}>
-        <Text style={[styles.name, { fontSize: 20 * scale }]} numberOfLines={1}>
+        <Text style={[styles.name, { fontSize: 17 * scale }]} numberOfLines={1}>
           {beehive.name}
         </Text>
-        <Text style={[styles.count, { fontSize: 16 * scale }]}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
+        <Text style={[styles.count, { fontSize: 13 * scale }]}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
       </View>
       {onRecord && (
         <TouchableOpacity style={styles.recordButton} onPress={onRecord} activeOpacity={0.7}>
@@ -50,10 +50,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    padding: spacing.lg,
+    padding: 18,
     marginHorizontal: spacing.lg,
     marginVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     ...shadows.card,
   },
   iconContainer: {
@@ -70,10 +70,13 @@ const styles = StyleSheet.create({
   },
   name: {
     ...typography.h3,
+    fontSize: 17,
+    fontWeight: '600',
     marginBottom: spacing.xs,
   },
   count: {
     ...typography.bodySmall,
+    fontSize: 13,
   },
   recordButton: {
     width: 44,

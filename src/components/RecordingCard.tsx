@@ -132,7 +132,7 @@ export default function RecordingCard({
     <View style={[styles.card, { backgroundColor: priorityTint }, style]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.date, { fontSize: 18 * scale }]}>{formatDateTime(recording.createdAt)}</Text>
+          <Text style={[styles.date, { fontSize: 17 * scale }]}>{formatDateTime(recording.createdAt)}</Text>
           {beehiveName && (
             <View style={styles.metaRow}>
               <MaterialCommunityIcons
@@ -225,10 +225,10 @@ const styles = StyleSheet.create({
   // --- Unsolved (full) card ---
   card: {
     backgroundColor: colors.card,
-    padding: spacing.lg,
+    padding: 18,
     marginHorizontal: spacing.lg,
     marginVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     gap: spacing.md,
     ...shadows.card,
   },
@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
   },
   date: {
     ...typography.body,
+    fontSize: 17,
     fontWeight: '600',
   },
   metaRow: {

@@ -75,7 +75,7 @@ export default function LocationCard({
         <View style={styles.content}>
           <View style={styles.header}>
             <Ionicons name="location" size={24} color={accentColor} />
-            <Text style={[styles.name, { fontSize: 22 * scale }]} numberOfLines={1}>
+            <Text style={[styles.name, { fontSize: 17 * scale }]} numberOfLines={1}>
               {location.name}
             </Text>
             <Ionicons name="chevron-forward" size={22} color={colors.textLight} />
@@ -88,13 +88,13 @@ export default function LocationCard({
                 color={colors.textSecondary}
               />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{beehiveCount}</Text>
-              <Text style={[styles.statLabel, { fontSize: 15 * scale }]}>{t('beehives.title')}</Text>
+              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>{t('beehives.title')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{recordingCount}</Text>
-              <Text style={[styles.statLabel, { fontSize: 15 * scale }]}>{t('recordings.title')}</Text>
+              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>{t('recordings.title')}</Text>
             </View>
           </View>
         </View>
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     marginHorizontal: spacing.lg,
     marginVertical: spacing.sm,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     minHeight: 200,
     overflow: 'hidden',
     ...shadows.card,
@@ -137,8 +137,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   name: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: colors.text,
     flex: 1,
   },
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   statLabel: {
-    fontSize: 15,
+    fontSize: 13,
     color: colors.textSecondary,
   },
   statDivider: {

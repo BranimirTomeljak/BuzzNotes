@@ -7,14 +7,23 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
-  Pressable,
   FlatList,
   StyleSheet,
   useWindowDimensions,
+  Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import {
+  PinchGestureHandler,
+  PinchGestureHandlerGestureEvent,
+  PinchGestureHandlerStateChangeEvent,
+  TapGestureHandler,
+  TapGestureHandlerStateChangeEvent,
+  State,
+  GestureHandlerRootView,
+} from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
 import { useData } from '../../src/contexts/DataContext';
 import { savePhoto, deletePhoto } from '../../src/services/photoStorage';
@@ -28,6 +37,93 @@ import { formatDateTime, formatDuration } from '../../src/utils/formatting';
 import { Priority } from '../../src/models/types';
 
 const PRIORITY_CYCLE: Priority[] = [Priority.HIGH, Priority.MEDIUM, Priority.LOW];
+
+function ZoomableImage({
+  uri,
+  width,
+  height,
+  pageIndex,
+  activeIndex,
+}: {
+  uri: string;
+  width: number;
+  height: number;
+  pageIndex: number;
+  activeIndex: number;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const savedScaleRef = useRef(1);
+  const pinchRef = useRef<PinchGestureHandler>(null);
+  const doubleTapRef = useRef<TapGestureHandler>(null);
+
+  // Reset zoom when swiping to a different photo
+  useEffect(() => {
+    if (pageIndex !== activeIndex) {
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      savedScaleRef.current = 1;
+    }
+  }, [activeIndex, pageIndex, scaleAnim]);
+
+  const onPinchEvent = Animated.event<PinchGestureHandlerGestureEvent>(
+    [{ nativeEvent: { scale: scaleAnim } }],
+    { useNativeDriver: true },
+  );
+
+  const onPinchStateChange = useCallback(
+    (event: PinchGestureHandlerStateChangeEvent) => {
+      if (event.nativeEvent.oldState === State.ACTIVE) {
+        const newScale = savedScaleRef.current * event.nativeEvent.scale;
+        const clamped = Math.min(Math.max(newScale, 1), 5);
+        savedScaleRef.current = clamped;
+        scaleAnim.setValue(clamped);
+      }
+    },
+    [scaleAnim],
+  );
+
+  const onDoubleTap = useCallback(
+    (event: TapGestureHandlerStateChangeEvent) => {
+      if (event.nativeEvent.state === State.ACTIVE) {
+        const target = savedScaleRef.current > 1 ? 1 : 2;
+        savedScaleRef.current = target;
+        Animated.spring(scaleAnim, {
+          toValue: target,
+          useNativeDriver: true,
+        }).start();
+      }
+    },
+    [scaleAnim],
+  );
+
+  return (
+    <TapGestureHandler
+      ref={doubleTapRef}
+      numberOfTaps={2}
+      onHandlerStateChange={onDoubleTap}
+    >
+      <Animated.View>
+        <PinchGestureHandler
+          ref={pinchRef}
+          onGestureEvent={onPinchEvent}
+          onHandlerStateChange={onPinchStateChange}
+        >
+          <Animated.Image
+            source={{ uri }}
+            style={[
+              { width, height: height * 0.8 },
+              { transform: [{ scale: scaleAnim }] },
+            ]}
+            resizeMode="contain"
+          />
+        </PinchGestureHandler>
+      </Animated.View>
+    </TapGestureHandler>
+  );
+}
 
 export default function RecordingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -230,7 +326,7 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={18} color={colors.text} />
-            <Text style={[styles.sectionTitle, { fontSize: 18 * scale }]}>{t('recordings.notes')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>{t('recordings.notes')}</Text>
           </View>
           <TextInput
             style={[styles.notesInput, { fontSize: 16 * scale, minHeight: isTablet ? 150 : 120 }]}
@@ -248,7 +344,7 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="images-outline" size={18} color={colors.text} />
-            <Text style={[styles.sectionTitle, { fontSize: 18 * scale }]}>{t('recordings.photos')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>{t('recordings.photos')}</Text>
           </View>
 
           {/* Add photo buttons */}
@@ -286,6 +382,7 @@ export default function RecordingDetail() {
 
       {/* Fullscreen photo viewer with swipe */}
       <Modal visible={viewingPhotoIndex !== null} transparent animationType="fade">
+        <GestureHandlerRootView style={{ flex: 1 }}>
         <View style={styles.photoViewerOverlay}>
           <TouchableOpacity
             style={styles.photoViewerClose}
@@ -312,17 +409,16 @@ export default function RecordingDetail() {
                   setViewingPhotoIndex(idx);
                 }}
                 keyExtractor={(item, i) => item + i}
-                renderItem={({ item }) => (
-                  <Pressable
-                    style={[styles.photoViewerPage, { width: screenWidth }]}
-                    onPress={() => setViewingPhotoIndex(null)}
-                  >
-                    <Image
-                      source={{ uri: item }}
-                      style={{ width: screenWidth, height: screenHeight * 0.8 }}
-                      resizeMode="contain"
+                renderItem={({ item, index }) => (
+                  <View style={[styles.photoViewerPage, { width: screenWidth }]}>
+                    <ZoomableImage
+                      uri={item}
+                      width={screenWidth}
+                      height={screenHeight}
+                      pageIndex={index}
+                      activeIndex={viewingPhotoIndex!}
                     />
-                  </Pressable>
+                  </View>
                 )}
               />
               <Text style={styles.photoCounter}>
@@ -331,6 +427,7 @@ export default function RecordingDetail() {
             </>
           )}
         </View>
+        </GestureHandlerRootView>
       </Modal>
     </View>
   );
@@ -358,7 +455,7 @@ const styles = StyleSheet.create({
   metaCard: {
     backgroundColor: colors.card,
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     gap: spacing.sm,
     ...shadows.card,
   },
@@ -402,7 +499,7 @@ const styles = StyleSheet.create({
   },
   audioCard: {
     padding: spacing.lg,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     ...shadows.card,
   },
   noAudio: {
@@ -420,7 +517,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h3,
-    fontSize: 18,
+    fontSize: 22,
+    fontWeight: '700',
     flex: 1,
   },
   notesInput: {

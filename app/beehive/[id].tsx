@@ -91,7 +91,7 @@ export default function BeehiveDetail() {
     [id],
   );
 
-  const { renderTabBar } = useDetailTabBar(routes);
+  const { renderTabBar } = useDetailTabBar();
 
   const handleChangeLocation = useCallback(
     (locationId: string) => {

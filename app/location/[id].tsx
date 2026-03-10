@@ -237,7 +237,7 @@ export default function LocationDetail() {
     [id, search],
   );
 
-  const { renderTabBar } = useDetailTabBar(routes);
+  const { renderTabBar } = useDetailTabBar();
 
   const handleDelete = useCallback(() => {
     hapticWarning();
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     backgroundColor: colors.card,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: spacing.xl,
     width: '100%',
     maxWidth: 400,

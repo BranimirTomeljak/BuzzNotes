@@ -1,51 +1,65 @@
-import { useCallback, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
-import { TabBar, SceneRendererProps, NavigationState } from 'react-native-tab-view';
-import { colors } from '../theme';
+import { useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SceneRendererProps, NavigationState } from 'react-native-tab-view';
+import { colors, spacing } from '../theme';
 
 type Route = { key: string; title: string };
 
-export function useDetailTabBar(routes: Route[]) {
-  const tabOptions = useMemo(
-    () =>
-      Object.fromEntries(
-        routes.map((route) => [route.key, { labelStyle: detailTabStyles.tabLabel }]),
-      ),
-    [routes],
-  );
-
+export function useDetailTabBar() {
   const renderTabBar = useCallback(
-    (props: SceneRendererProps & { navigationState: NavigationState<Route> }) => (
-      <TabBar
-        {...props}
-        style={detailTabStyles.tabBar}
-        indicatorStyle={detailTabStyles.tabIndicator}
-        activeColor={colors.primary}
-        inactiveColor={colors.textLight}
-        options={tabOptions}
-      />
-    ),
-    [tabOptions],
+    (props: SceneRendererProps & { navigationState: NavigationState<Route> }) => {
+      const { navigationState, jumpTo } = props;
+      return (
+        <View style={pillStyles.container}>
+          {navigationState.routes.map((route, i) => {
+            const isActive = navigationState.index === i;
+            return (
+              <TouchableOpacity
+                key={route.key}
+                style={[pillStyles.pill, isActive && pillStyles.pillActive]}
+                onPress={() => jumpTo(route.key)}
+                activeOpacity={0.7}
+              >
+                <Text style={[pillStyles.label, isActive && pillStyles.labelActive]}>
+                  {route.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      );
+    },
+    [],
   );
 
-  return { tabOptions, renderTabBar };
+  return { renderTabBar };
 }
 
-export const detailTabStyles = StyleSheet.create({
-  tabBar: {
+const pillStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    shadowOpacity: 0,
-    elevation: 0,
   },
-  tabIndicator: {
-    backgroundColor: colors.primary,
-    height: 2,
+  pill: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: 'transparent',
   },
-  tabLabel: {
+  pillActive: {
+    backgroundColor: colors.primaryTint,
+  },
+  label: {
+    fontSize: 13,
     fontWeight: '600',
-    fontSize: 14,
-    textTransform: 'none',
+    color: colors.tabInactive,
+  },
+  labelActive: {
+    color: colors.primaryDark,
   },
 });

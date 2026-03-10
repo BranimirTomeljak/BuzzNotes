@@ -10,7 +10,7 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - **Navigation**: Expo Router v6 (file-based routing in `app/` directory)
 - **Backend**: Offline-first (AsyncStorage). Firebase code kept for future cloud sync.
 - **Audio**: expo-audio (migrated from deprecated expo-av)
-- **Photos**: expo-image-picker (camera + gallery), file-based storage in `photos/` directory
+- **Photos**: expo-image-picker (camera + gallery), file-based storage in `photos/` directory, pinch-to-zoom via react-native-gesture-handler
 - **Haptics**: expo-haptics (no-op on web)
 - **Icons**: @expo/vector-icons (Ionicons + MaterialCommunityIcons) — no emojis in UI
 - **State**: React Context + useReducer
@@ -100,7 +100,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 ## Conventions
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
 - Croatian is the default language
-- Colors follow honey/amber theme (primary: #B8860B, bg: #FAFAF7, surface: #F3F1EC)
+- Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)
 - Large touch targets and font sizes for accessibility
 - Priority system: HIGH (red #EF5350), MEDIUM (yellow #F9A825), LOW (blue #5C9CE6)
 - Priority colors are consistent everywhere — badge, picker, and card tint all use the same scheme
@@ -118,12 +118,12 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Navigation: `Ionicons: location-outline` (locations tab), `time-outline` (recent), `flag-outline` (priority)
 
 ### Cards & Layout
-- Cards: white background with light shadow, `borderRadius.lg` (16px)
-- Tabs: underline-style (borderBottom) not filled pills
-- Inputs: surface-colored (#F3F1EC) with no border
-- Dialogs: borderRadius 20
+- Cards: white background with warm shadow (`#8B6914` shadowColor), `borderRadius.xl` (20px)
+- Tabs: pill-style with `primaryTint` active background, `primaryDark` (#8B6914) active text
+- Inputs: surface-colored (#F0EBE0) with no border
+- Dialogs: borderRadius 24
 - FABs: 56x56, bottom: 100, `fab` color (#D4A530)
-- Tab bar: white, height 72, paddingBottom 24 (clears gesture bar)
+- Tab bar: white, pill-style highlighting, paddingBottom 24 (clears gesture bar)
 
 ### Voice Note Cards
 - **Unsolved**: full card with priority-based background tint (HIGH: #FFECEC, MEDIUM: #FFF8E0, LOW: #ECF2FF)
@@ -144,7 +144,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Audio player with priority tint (or muted if solved)
 - Notes section with inline edit (pencil icon toggles edit mode)
 - Photo grid (2 columns) with camera/gallery add buttons and remove buttons
-- Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList) and "1 / N" counter
+- Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList), pinch-to-zoom (1x–5x), double-tap to toggle 2x zoom, and "1 / N" counter
 - Deleting a recording also deletes its photos from disk (`deletePhotos`)
 
 ### Audio Player
@@ -172,7 +172,7 @@ Recording list scenes, editable name rows, tab bar config, and delete confirmati
 - **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
 - **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Photos stored as `photos/{recordingId}_{index}.jpg`.
 - **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
-- **`useDetailTabBar`** (`src/hooks/`) — Shared TabBar config (underline style, primary indicator) for detail screens. Returns `{ renderTabBar }`.
+- **`useDetailTabBar`** (`src/hooks/`) — Shared pill-style tab bar for detail screens. Returns `{ renderTabBar }`. No arguments needed.
 - **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
 
 ## Architecture: Offline-First with Local User ID

@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback } from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import React, { useMemo, useCallback, useRef, useEffect } from 'react';
+import { FlatList, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../contexts/DataContext';
 import RecordingCard from './RecordingCard';
@@ -7,6 +7,26 @@ import EmptyState from './EmptyState';
 import { Recording, Priority } from '../models/types';
 import { spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
+
+function FadeInView({ children }: { children: React.ReactNode }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (!hasAnimated.current) {
+      hasAnimated.current = true;
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      opacity.setValue(1);
+    }
+  }, [opacity]);
+
+  return <Animated.View style={{ opacity }}>{children}</Animated.View>;
+}
 
 interface RecordingListSceneProps {
   recordings: Recording[];
@@ -40,18 +60,20 @@ export default function RecordingListScene({
 
   const renderItem = useCallback(
     ({ item }: { item: Recording }) => (
-      <RecordingCard
-        recording={item}
-        beehiveName={getBeehiveName?.(item.beehiveId)}
-        locationName={getLocationName?.(item.locationId)}
-        showSolvedDivider={columns === 1 && item.id === firstSolvedId}
-        onUpdatePriority={(priority: Priority) => updateRecording(item.id, { priority })}
-        onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
-        onDelete={() => deleteRecording(item.id)}
-        onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
-        onPress={onPressRecording ? () => onPressRecording(item.id) : undefined}
-        style={cardStyle}
-      />
+      <FadeInView>
+        <RecordingCard
+          recording={item}
+          beehiveName={getBeehiveName?.(item.beehiveId)}
+          locationName={getLocationName?.(item.locationId)}
+          showSolvedDivider={columns === 1 && item.id === firstSolvedId}
+          onUpdatePriority={(priority: Priority) => updateRecording(item.id, { priority })}
+          onToggleSolved={() => updateRecording(item.id, { solved: !item.solved })}
+          onDelete={() => deleteRecording(item.id)}
+          onPlay={() => updateRecording(item.id, { lastListenedAt: Date.now() })}
+          onPress={onPressRecording ? () => onPressRecording(item.id) : undefined}
+          style={cardStyle}
+        />
+      </FadeInView>
     ),
     [
       getBeehiveName,

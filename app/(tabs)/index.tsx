@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { TabView, TabBar, SceneRendererProps, NavigationState } from 'react-native-tab-view';
+import { TabView, SceneRendererProps, NavigationState } from 'react-native-tab-view';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useData } from '../../src/contexts/DataContext';
 import LocationCard from '../../src/components/LocationCard';
@@ -185,34 +185,30 @@ export default function MainScreen() {
     [t],
   );
 
-  const tabOptions = useMemo(
-    () =>
-      Object.fromEntries(
-        routes.map((route) => [
-          route.key,
-          {
-            icon: ({ color }: { route: Route; focused: boolean; color: string; size: number }) => (
-              <Ionicons name={route.icon} size={24} color={color} />
-            ),
-            labelStyle: styles.tabLabel,
-          },
-        ]),
-      ),
-    [routes],
-  );
-
   const renderTabBar = useCallback(
-    (props: SceneRendererProps & { navigationState: NavigationState<Route> }) => (
-      <TabBar
-        {...props}
-        style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 24) }]}
-        indicatorStyle={styles.tabIndicator}
-        activeColor={colors.tabActive}
-        inactiveColor={colors.tabInactive}
-        options={tabOptions}
-      />
-    ),
-    [insets.bottom, tabOptions],
+    (props: SceneRendererProps & { navigationState: NavigationState<Route> }) => {
+      const { navigationState, jumpTo } = props;
+      return (
+        <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+          {navigationState.routes.map((route, i) => {
+            const isActive = navigationState.index === i;
+            const color = isActive ? colors.tabActive : colors.tabInactive;
+            return (
+              <TouchableOpacity
+                key={route.key}
+                style={[styles.tabItem, isActive && styles.tabItemActive]}
+                onPress={() => jumpTo(route.key)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={route.icon} size={24} color={color} />
+                <Text style={[styles.tabLabel, { color }]}>{route.title}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      );
+    },
+    [insets.bottom],
   );
 
   return (
@@ -262,20 +258,30 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     backgroundColor: colors.tabBar,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 4,
+    paddingTop: spacing.sm,
   },
-  tabIndicator: {
-    backgroundColor: colors.tabActive,
-    height: 2,
+  tabItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 20,
+    gap: 2,
+  },
+  tabItemActive: {
+    backgroundColor: colors.primaryTint,
   },
   tabLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    textTransform: 'none',
   },
 });
