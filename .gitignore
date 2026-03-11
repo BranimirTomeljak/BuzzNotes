@@ -40,6 +40,7 @@ yarn-error.*
 /ios
 /android
 
-# claude plan files
+# claude
+.claude/
 docs/
 .superpowers/
