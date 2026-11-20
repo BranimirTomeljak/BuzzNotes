@@ -27,7 +27,7 @@ function encode(segment: string): string {
     .replace(/ /g, '%20');
 }
 
-// Like Android: drops ?query and #fragment, decodes %xx in the URI, then resolves . and .. segments.
+// Drops #fragment and ?query (Android throws on a query), decodes %xx, then resolves dot segments.
 function resolve(first: string, names: string[]): Loc {
   const bare = first.split(/[?#]/)[0];
   const match = /^([a-zA-Z][\w+.-]*:\/\/[^/]*)(.*)$/.exec(bare);
