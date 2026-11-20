@@ -1,6 +1,8 @@
 import { dataReducer, DataState, DataAction } from '../contexts/DataContext';
 import { Priority, Location, Beehive, Recording } from '../models/types';
 
+jest.mock('../i18n', () => ({ __esModule: true, default: { t: (key: string) => key } }));
+
 const emptyState: DataState = {
   locations: [],
   beehives: [],

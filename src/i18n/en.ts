@@ -114,5 +114,7 @@ export default {
     exportSuccess: 'Data exported successfully',
     importSuccess: 'Data imported successfully',
     importError: 'Error importing data',
+    loadError: 'Could not read saved data. Nothing was overwritten; pull down to retry',
+    saveError: 'Changes could not be saved',
   },
 };

@@ -12,6 +12,7 @@ const { create } = require('react-test-renderer') as {
 jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'));
 jest.mock('react-native-toast-message', () => ({ __esModule: true, default: { show: jest.fn() } }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+jest.mock('../i18n', () => ({ __esModule: true, default: { t: (key: string) => key } }));
 jest.mock('expo-crypto', () => {
   let n = 0;
   return { randomUUID: () => `uuid-${++n}` };

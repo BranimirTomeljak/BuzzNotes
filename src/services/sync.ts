@@ -13,21 +13,17 @@ export async function loadLocalData(): Promise<{
   beehives: Beehive[];
   recordings: Recording[];
 }> {
-  try {
-    const [locationsJson, beehivesJson, recordingsJson] = await Promise.all([
-      AsyncStorage.getItem(KEYS.locations),
-      AsyncStorage.getItem(KEYS.beehives),
-      AsyncStorage.getItem(KEYS.recordings),
-    ]);
+  const [locationsJson, beehivesJson, recordingsJson] = await Promise.all([
+    AsyncStorage.getItem(KEYS.locations),
+    AsyncStorage.getItem(KEYS.beehives),
+    AsyncStorage.getItem(KEYS.recordings),
+  ]);
 
-    return {
-      locations: locationsJson ? JSON.parse(locationsJson) : [],
-      beehives: beehivesJson ? JSON.parse(beehivesJson) : [],
-      recordings: recordingsJson ? JSON.parse(recordingsJson) : [],
-    };
-  } catch {
-    return { locations: [], beehives: [], recordings: [] };
-  }
+  return {
+    locations: locationsJson ? JSON.parse(locationsJson) : [],
+    beehives: beehivesJson ? JSON.parse(beehivesJson) : [],
+    recordings: recordingsJson ? JSON.parse(recordingsJson) : [],
+  };
 }
 
 export async function saveLocalLocations(locations: Location[]): Promise<void> {

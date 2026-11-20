@@ -115,5 +115,8 @@ export default {
     exportSuccess: 'Podaci uspješno izvezeni',
     importSuccess: 'Podaci uspješno uvezeni',
     importError: 'Greška pri uvozu podataka',
+    loadError:
+      'Spremljene podatke nije moguće učitati. Ništa nije prepisano; povuci prema dolje za ponovni pokušaj',
+    saveError: 'Promjene nije moguće spremiti',
   },
 };

@@ -249,11 +249,16 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
 - **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
+- **Never persist after a failed load**: `loadLocalData` rejects on a read or parse error. `DataProvider` then stays in `loading`, shows `common.loadError`, and blocks saves and import until a pull-to-refresh loads successfully. Saving the empty state would overwrite the user's data.
+- **AsyncStorage limits on Android**: the database is capped at 6 MiB, and a single value larger than about 2 MiB cannot be read back (CursorWindow limit).
+- **Stored data version**: there is no `@buzznotes/schemaVersion` key yet; once one exists, a missing key means v1.
+- **Whole-dataset writes**: every change rewrites all three data keys. This is intentional at this data size.
 - **Jest: expo-file-system**: jest-expo replaces it with a stub in which `File`, `Directory` and `Paths` are undefined. Every test file that touches files declares `jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'))`.
 - **Jest: expo-crypto**: the auto-mock's `randomUUID` returns `undefined`; mock it with a counter.
 - **Jest: Platform**: `Platform.OS` is `'ios'`; for web paths use `jest.replaceProperty(Platform, 'OS', 'web')`. To exercise the real web stub, also mock `expo-file-system` with `jest.requireActual('expo-file-system')` and `expo-file-system/src/ExpoFileSystem` with `jest.requireActual('expo-file-system/src/ExpoFileSystem.web')`.
 - **Jest: react-test-renderer**: 19.1.0 comes in through jest-expo but has no types, so `import ... from 'react-test-renderer'` fails CI's strict `tsc` with TS7016. Use `const { create } = require('react-test-renderer') as { create: (el: React.ReactElement) => { unmount: () => void } };` and take `act` from `'react'`.
 - **Jest: provider tests**: also mock `react-native-toast-message` (`{ __esModule: true, default: { show: jest.fn() } }`) and `react-i18next` (`t` returns the key). In `beforeEach`, call `fakeFs.reset()` and `AsyncStorage.clear()`, then seed AsyncStorage. Render inside `await act(async () => ...)`, let effects settle with a zero timeout inside `act`, and unmount in `afterEach`.
+- **Jest: i18n**: every test that imports `DataContext` mocks `../i18n` with `{ __esModule: true, default: { t: (key: string) => key } }`. The real module calls `i18n.use(initReactI18next)` at import time, which throws under the `react-i18next` mock and logs a locize notice otherwise.
 - **Jest: mocks and lint**: put `jest.mock` calls after the imports (babel hoists them, and this avoids the `import/first` warning), and leave no unused imports, or lint shows a third warning.
 
 ## UX Polish

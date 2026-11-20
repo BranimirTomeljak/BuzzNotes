@@ -20,6 +20,7 @@ import { exportData, importData } from '../services/exportImport';
 import { deletePhotos } from '../services/photoStorage';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const LOCAL_USER_ID_KEY = '@buzznotes/userId';
 
@@ -36,6 +37,10 @@ async function getOrCreateLocalUserId(): Promise<string> {
     await AsyncStorage.setItem(LOCAL_USER_ID_KEY, userId);
   }
   return userId;
+}
+
+function showLoadError() {
+  Toast.show({ type: 'error', text1: i18n.t('common.loadError'), visibilityTime: 6000 });
 }
 
 interface DataState {
@@ -165,6 +170,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const userIdRef = useRef<string>('');
+  const loadFailedRef = useRef(false);
   const [state, dispatch] = useReducer(dataReducer, {
     locations: [],
     beehives: [],
@@ -177,24 +183,36 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       dispatch({ type: 'SET_LOADING', loading: true });
-      userIdRef.current = await getOrCreateLocalUserId();
-      const data = await loadLocalData();
-      dispatch({
-        type: 'SET_ALL',
-        locations: data.locations,
-        beehives: data.beehives,
-        recordings: data.recordings,
-      });
+      try {
+        userIdRef.current = await getOrCreateLocalUserId();
+        const data = await loadLocalData();
+        dispatch({
+          type: 'SET_ALL',
+          locations: data.locations,
+          beehives: data.beehives,
+          recordings: data.recordings,
+        });
+      } catch {
+        loadFailedRef.current = true;
+        showLoadError();
+      }
     })();
   }, []);
 
   // Persist to AsyncStorage whenever data changes
   useEffect(() => {
-    if (!state.loading) {
-      saveLocalLocations(state.locations);
-      saveLocalBeehives(state.beehives);
-      saveLocalRecordings(state.recordings);
+    // Never save before a successful load, or the in-memory state would overwrite stored data.
+    if (state.loading) {
+      if (loadFailedRef.current) showLoadError();
+      return;
     }
+    Promise.all([
+      saveLocalLocations(state.locations),
+      saveLocalBeehives(state.beehives),
+      saveLocalRecordings(state.recordings),
+    ]).catch(() => {
+      Toast.show({ type: 'error', text1: i18n.t('common.saveError'), visibilityTime: 3000 });
+    });
   }, [state.locations, state.beehives, state.recordings, state.loading]);
 
   const addLocation = useCallback(async (name: string): Promise<Location> => {
@@ -292,6 +310,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         beehives: data.beehives,
         recordings: data.recordings,
       });
+    } catch {
+      showLoadError();
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
@@ -318,6 +338,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [state.locations, state.beehives, state.recordings, t]);
 
   const importAllData = useCallback(async () => {
+    if (state.loading) {
+      showLoadError();
+      return;
+    }
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
       const imported = await importData();
@@ -371,7 +395,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
-  }, [state.locations, state.beehives, state.recordings, t]);
+  }, [state.locations, state.beehives, state.recordings, state.loading, t]);
 
   const getBeehivesForLocation = useCallback(
     (locationId: string) => state.beehives.filter((b) => b.locationId === locationId),
