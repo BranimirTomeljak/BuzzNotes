@@ -23,7 +23,7 @@ const USER_ID_KEY = '@buzznotes/userId';
 const KEYS = ['@buzznotes/locations', '@buzznotes/beehives', '@buzznotes/recordings'];
 const storage = jest.mocked(AsyncStorage);
 const realGetItem = storage.getItem.getMockImplementation()!;
-const realSetItem = storage.setItem.getMockImplementation()!;
+const realMultiSet = storage.multiSet.getMockImplementation()!;
 
 const loc: Location = {
   id: 'loc1',
@@ -129,7 +129,7 @@ afterEach(() => {
   act(() => renderer?.unmount());
   renderer = undefined;
   storage.getItem.mockImplementation(realGetItem);
-  storage.setItem.mockImplementation(realSetItem);
+  storage.multiSet.mockImplementation(realMultiSet);
 });
 
 describe('DataProvider persistence', () => {
@@ -234,16 +234,51 @@ describe('DataProvider persistence', () => {
   });
 
   // jest-circus fails a test that leaves an unhandled rejection, so passing proves there is none.
-  it('a rejected setItem shows saveError once with no unhandled rejection', async () => {
+  it('a rejected multiSet shows saveError once with no unhandled rejection', async () => {
     await renderProvider();
     jest.clearAllMocks();
-    storage.setItem.mockImplementation(async () => {
+    storage.multiSet.mockImplementation(async () => {
       throw new Error('disk full');
     });
 
     await run(() => data.updateLocation('loc1', { name: 'Kuljani 2' }));
 
     expect(toasts()).toEqual([saveErrorToast]);
+  });
+
+  it('an edit writes all three keys in one multiSet call', async () => {
+    await renderProvider();
+    jest.clearAllMocks();
+
+    await run(() => data.updateLocation('loc1', { name: 'Kuljani 2' }));
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(storage.multiSet).toHaveBeenCalledTimes(1);
+    expect(storage.multiSet.mock.calls[0][0].map(([key]) => key)).toEqual(KEYS);
+  });
+
+  it('notes of 1,000,000 č characters are rejected, show saveError and write nothing', async () => {
+    await renderProvider();
+    const before = await stored();
+    jest.clearAllMocks();
+
+    await run(() => data.updateRecording('rec1', { notes: 'č'.repeat(1_000_000) }));
+
+    expect(toasts()).toEqual([saveErrorToast]);
+    expect(storage.setItem).not.toHaveBeenCalled();
+    expect(storage.multiSet).not.toHaveBeenCalled();
+    expect(await stored()).toEqual(before);
+  });
+
+  it('notes of 1,000,000 ASCII characters are saved', async () => {
+    await renderProvider();
+    jest.clearAllMocks();
+
+    await run(() => data.updateRecording('rec1', { notes: 'a'.repeat(1_000_000) }));
+
+    const [, , recordings] = await stored();
+    expect(JSON.parse(recordings!)[0].notes).toHaveLength(1_000_000);
+    expect(Toast.show).not.toHaveBeenCalled();
   });
 
   it('a normal edit writes all keys and shows no toast', async () => {

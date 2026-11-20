@@ -10,12 +10,7 @@ import React, {
 import { randomUUID } from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Location, Beehive, Recording, Priority } from '../models/types';
-import {
-  loadLocalData,
-  saveLocalLocations,
-  saveLocalBeehives,
-  saveLocalRecordings,
-} from '../services/sync';
+import { loadLocalData, saveLocalData } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
 import { deletePhotos } from '../services/photoStorage';
 import Toast from 'react-native-toast-message';
@@ -206,11 +201,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (loadFailedRef.current) showLoadError();
       return;
     }
-    Promise.all([
-      saveLocalLocations(state.locations),
-      saveLocalBeehives(state.beehives),
-      saveLocalRecordings(state.recordings),
-    ]).catch(() => {
+    saveLocalData(state.locations, state.beehives, state.recordings).catch(() => {
       Toast.show({ type: 'error', text1: i18n.t('common.saveError'), visibilityTime: 3000 });
     });
   }, [state.locations, state.beehives, state.recordings, state.loading]);

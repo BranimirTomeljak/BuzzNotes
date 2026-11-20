@@ -7,6 +7,9 @@ const KEYS = {
   recordings: '@buzznotes/recordings',
 };
 
+// Android's CursorWindow cannot read back a value much over 2 MiB, so never write one.
+const MAX_RECORDINGS_BYTES = 1_900_000;
+
 // Local storage operations
 export async function loadLocalData(): Promise<{
   locations: Location[];
@@ -24,6 +27,22 @@ export async function loadLocalData(): Promise<{
     beehives: beehivesJson ? JSON.parse(beehivesJson) : [],
     recordings: recordingsJson ? JSON.parse(recordingsJson) : [],
   };
+}
+
+export async function saveLocalData(
+  locations: Location[],
+  beehives: Beehive[],
+  recordings: Recording[],
+): Promise<void> {
+  const recordingsJson = JSON.stringify(recordings);
+  if (new TextEncoder().encode(recordingsJson).length > MAX_RECORDINGS_BYTES) {
+    throw new Error('Recordings data is too large to save');
+  }
+  await AsyncStorage.multiSet([
+    [KEYS.locations, JSON.stringify(locations)],
+    [KEYS.beehives, JSON.stringify(beehives)],
+    [KEYS.recordings, recordingsJson],
+  ]);
 }
 
 export async function saveLocalLocations(locations: Location[]): Promise<void> {
