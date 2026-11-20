@@ -133,7 +133,9 @@ export default function RecordingCard({
     <View style={[styles.card, { backgroundColor: priorityTint }, style]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.date, { fontSize: 17 * scale }]}>{formatDateTime(recording.createdAt)}</Text>
+          <Text style={[styles.date, { fontSize: 17 * scale }]}>
+            {formatDateTime(recording.createdAt)}
+          </Text>
           {beehiveName && (
             <View style={styles.metaRow}>
               <MaterialCommunityIcons
@@ -189,7 +191,11 @@ export default function RecordingCard({
         {hasPhotos && (
           <>
             {recording.photos!.slice(0, 4).map((uri) => (
-              <Image key={uri} source={{ uri }} style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]} />
+              <Image
+                key={uri}
+                source={{ uri }}
+                style={[styles.photoThumb, { width: 48 * scale, height: 48 * scale }]}
+              />
             ))}
             {recording.photos!.length > 4 && (
               <View style={[styles.photoMore, { width: 48 * scale, height: 48 * scale }]}>

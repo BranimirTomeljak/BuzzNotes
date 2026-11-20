@@ -68,7 +68,11 @@ export default function LocationCard({
   const accentColor = ACCENT_COLORS[index % ACCENT_COLORS.length];
 
   return (
-    <TouchableOpacity style={[styles.card, isTablet && { minHeight: 160 }, style]} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, isTablet && { minHeight: 160 }, style]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={[styles.accent, { backgroundColor: accentColor }]} />
       <View style={styles.body}>
         <HexPattern color={accentColor} />
@@ -88,13 +92,17 @@ export default function LocationCard({
                 color={colors.textSecondary}
               />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{beehiveCount}</Text>
-              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>{t('beehives.title')}</Text>
+              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>
+                {t('beehives.title')}
+              </Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.stat}>
               <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{recordingCount}</Text>
-              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>{t('recordings.title')}</Text>
+              <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>
+                {t('recordings.title')}
+              </Text>
             </View>
           </View>
         </View>

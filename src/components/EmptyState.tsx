@@ -14,7 +14,14 @@ export default function EmptyState({ icon, title, description }: EmptyStateProps
 
   return (
     <View style={styles.container}>
-      <View style={[styles.iconCircle, { width: 96 * scale, height: 96 * scale, borderRadius: 48 * scale }]}>{icon}</View>
+      <View
+        style={[
+          styles.iconCircle,
+          { width: 96 * scale, height: 96 * scale, borderRadius: 48 * scale },
+        ]}
+      >
+        {icon}
+      </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
     </View>
