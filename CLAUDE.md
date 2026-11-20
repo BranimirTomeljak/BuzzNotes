@@ -62,7 +62,8 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 `.github/workflows/ci.yml` runs on every push to `master` and on PRs:
 1. TypeScript type check (`npx tsc --noEmit`)
 2. ESLint (`npm run lint`)
-3. Jest tests (`npm test`)
+3. Prettier check (`npm run format:check`)
+4. Jest tests (`npm test`)
 
 ### Testing
 

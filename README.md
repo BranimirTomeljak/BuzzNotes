@@ -43,6 +43,7 @@ Quality checks (the same ones CI runs on every push and pull request):
 ```bash
 npx tsc --noEmit
 npm run lint
+npm run format:check
 npm test
 ```
 
