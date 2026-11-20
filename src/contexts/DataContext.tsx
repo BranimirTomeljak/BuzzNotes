@@ -303,6 +303,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const refreshData = useCallback(async () => {
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
+      // Retry the user id only after a failed first load, so this never races the mount effect.
+      if (loadFailedRef.current && !userIdRef.current) {
+        userIdRef.current = await getOrCreateLocalUserId();
+      }
       const data = await loadLocalData();
       dispatch({
         type: 'SET_ALL',

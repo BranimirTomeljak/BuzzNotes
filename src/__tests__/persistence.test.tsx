@@ -221,6 +221,18 @@ describe('DataProvider persistence', () => {
     expect(toasts()).toEqual([loadErrorToast]);
   });
 
+  it('a refresh after a failed user-id read also restores the user id', async () => {
+    failRead(USER_ID_KEY);
+    await renderProvider();
+    storage.getItem.mockImplementation(realGetItem);
+
+    await run(() => data.refreshData());
+    await run(() => data.addLocation('Novo'));
+
+    expect(data.loading).toBe(false);
+    expect(data.locations.find((l) => l.name === 'Novo')?.userId).toBe('u1');
+  });
+
   // jest-circus fails a test that leaves an unhandled rejection, so passing proves there is none.
   it('a rejected setItem shows saveError once with no unhandled rejection', async () => {
     await renderProvider();

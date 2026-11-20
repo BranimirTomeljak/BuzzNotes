@@ -249,7 +249,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
 - **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
-- **Never persist after a failed load**: `loadLocalData` rejects on a read or parse error. `DataProvider` then stays in `loading`, shows `common.loadError`, and blocks saves and import until a pull-to-refresh loads successfully. Saving the empty state would overwrite the user's data.
+- **Never persist after a failed load**: `loadLocalData` rejects on a read or parse error. `DataProvider` then stays in `loading`, shows `common.loadError`, and blocks saves and import until a pull-to-refresh loads successfully. That refresh also retries the user id if the first read failed. Saving the empty state would overwrite the user's data.
 - **AsyncStorage limits on Android**: the database is capped at 6 MiB, and a single value larger than about 2 MiB cannot be read back (CursorWindow limit).
 - **Stored data version**: there is no `@buzznotes/schemaVersion` key yet; once one exists, a missing key means v1.
 - **Whole-dataset writes**: every change rewrites all three data keys. This is intentional at this data size.
