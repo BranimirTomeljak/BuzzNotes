@@ -55,6 +55,10 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('exportData + importData', () => {
   it('round-trips data and media and rewrites paths to the new device', async () => {
     fakeFs.seed(rec.localPath, 'AUDIO-1');
@@ -87,7 +91,7 @@ describe('exportData + importData', () => {
     expect(fakeFs.read(`${DOC}/photos/r1_1.jpg`)).toBe('PHOTO-1');
   });
 
-  it('drops a photo that cannot be read at export time', async () => {
+  it('drops a photo that is missing at export time', async () => {
     fakeFs.seed(rec.localPath, 'AUDIO-1');
     fakeFs.seed(rec.photos![0], 'PHOTO-0');
 
@@ -101,6 +105,22 @@ describe('exportData + importData', () => {
     expect(result?.recordings[0].photos).toEqual([`${DOC}/photos/r1_0.jpg`]);
     expect(fakeFs.read(`${DOC}/photos/r1_0.jpg`)).toBe('PHOTO-0');
     expect(fakeFs.list(`${DOC}/photos`)).toEqual([`${DOC}/photos/r1_0.jpg`]);
+  });
+
+  it('drops a photo whose read fails at export time', async () => {
+    fakeFs.seed(rec.localPath, 'AUDIO-1');
+    fakeFs.seed(rec.photos![0], 'PHOTO-0');
+    fakeFs.seed(rec.photos![1], 'PHOTO-1');
+    const base64 = File.prototype.base64;
+    jest.spyOn(File.prototype, 'base64').mockImplementation(function (this: File) {
+      return this.uri === rec.photos![1] ? Promise.reject(new Error('EIO')) : base64.call(this);
+    });
+
+    await exportData([loc], [hive], [rec]);
+
+    const exported = JSON.parse(fakeFs.read(EXPORT_URI)!).recordings[0];
+    expect(exported.audioBase64).toBe(btoa('AUDIO-1'));
+    expect(exported.photosBase64).toEqual([btoa('PHOTO-0')]);
   });
 });
 
