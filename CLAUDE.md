@@ -68,9 +68,10 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 ### Testing
 
 - **Framework**: jest-expo preset
-- **Test files**: `src/__tests__/*.test.ts`
+- **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
-- **Coverage**: formatting utils, sorting utils, data reducer
+- **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there.
+- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
@@ -96,6 +97,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/hooks/` - Custom hooks (useDetailTabBar, useResponsive)
 - `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
 - `src/__tests__/` - Jest unit tests
+- `src/testUtils/` - Jest-only helpers (`fakeFileSystem`); never imported by app code
 - `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
 
 ## Conventions
@@ -247,6 +249,12 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
 - **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
+- **Jest: expo-file-system**: jest-expo replaces it with a stub in which `File`, `Directory` and `Paths` are undefined. Every test file that touches files declares `jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'))`.
+- **Jest: expo-crypto**: the auto-mock's `randomUUID` returns `undefined`; mock it with a counter.
+- **Jest: Platform**: `Platform.OS` is `'ios'`; for web paths use `jest.replaceProperty(Platform, 'OS', 'web')`. To exercise the real web stub, also mock `expo-file-system` with `jest.requireActual('expo-file-system')` and `expo-file-system/src/ExpoFileSystem` with `jest.requireActual('expo-file-system/src/ExpoFileSystem.web')`.
+- **Jest: react-test-renderer**: 19.1.0 comes in through jest-expo but has no types, so `import ... from 'react-test-renderer'` fails CI's strict `tsc` with TS7016. Use `const { create } = require('react-test-renderer') as { create: (el: React.ReactElement) => { unmount: () => void } };` and take `act` from `'react'`.
+- **Jest: provider tests**: also mock `react-native-toast-message` (`{ __esModule: true, default: { show: jest.fn() } }`) and `react-i18next` (`t` returns the key). In `beforeEach`, call `fakeFs.reset()` and `AsyncStorage.clear()`, then seed AsyncStorage. Render inside `await act(async () => ...)`, let effects settle with a zero timeout inside `act`, and unmount in `afterEach`.
+- **Jest: mocks and lint**: put `jest.mock` calls after the imports (babel hoists them, and this avoids the `import/first` warning), and leave no unused imports, or lint shows a third warning.
 
 ## UX Polish
 
