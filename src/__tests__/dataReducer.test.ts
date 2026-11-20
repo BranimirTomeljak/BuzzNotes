@@ -170,3 +170,94 @@ describe('dataReducer', () => {
     expect(state).toBe(emptyState);
   });
 });
+
+describe('dataReducer: beehive moves and location repair', () => {
+  const loc2: Location = { ...loc1, id: 'loc2', name: 'Apiary 2' };
+  const bh2: Beehive = { ...bh1, id: 'bh2', name: 'Hive 2' };
+  const recA: Recording = { ...rec1, id: 'recA' };
+  const recSolved: Recording = { ...rec1, id: 'recSolved', solved: true };
+  const recOther: Recording = { ...rec1, id: 'recOther', beehiveId: 'bh2' };
+  const state: DataState = {
+    ...emptyState,
+    locations: [loc1, loc2],
+    beehives: [bh1, bh2],
+    recordings: [recA, recSolved, recOther],
+  };
+  const move = (s: DataState) =>
+    dataReducer(s, {
+      type: 'UPDATE_BEEHIVE',
+      id: 'bh1',
+      data: { locationId: 'loc2', updatedAt: 5000 },
+    });
+
+  it("a move carries only that beehive's recordings, solved ones included, with updatedAt unchanged", () => {
+    const moved = move(state);
+
+    expect(moved.beehives[0]).toEqual({ ...bh1, locationId: 'loc2', updatedAt: 5000 });
+    expect(moved.recordings).toEqual([
+      { ...recA, locationId: 'loc2' },
+      { ...recSolved, locationId: 'loc2' },
+      recOther,
+    ]);
+    expect(moved.recordings[2]).toBe(recOther);
+  });
+
+  it('a rename keeps the recordings by reference', () => {
+    const renamed = dataReducer(state, {
+      type: 'UPDATE_BEEHIVE',
+      id: 'bh1',
+      data: { name: 'Renamed', updatedAt: 5000 },
+    });
+
+    expect(renamed.recordings).toBe(state.recordings);
+  });
+
+  it('after a move, deleting the old location keeps the beehive and its recordings, and deleting the new one removes both', () => {
+    const moved = move(state);
+
+    const oldDeleted = dataReducer(moved, { type: 'DELETE_LOCATION', id: 'loc1' });
+    expect(oldDeleted.beehives.map((b) => b.id)).toEqual(['bh1']);
+    expect(oldDeleted.recordings.map((r) => r.id)).toEqual(['recA', 'recSolved']);
+
+    const newDeleted = dataReducer(moved, { type: 'DELETE_LOCATION', id: 'loc2' });
+    expect(newDeleted.beehives.map((b) => b.id)).toEqual(['bh2']);
+    expect(newDeleted.recordings.map((r) => r.id)).toEqual(['recOther']);
+  });
+
+  it('SET_ALL realigns a stale recording, keeps aligned and orphan recordings by reference, keeps their order and is idempotent', () => {
+    const movedHive: Beehive = { ...bh1, locationId: 'loc2' };
+    const stale: Recording = { ...rec1, id: 'stale' };
+    const aligned: Recording = { ...rec1, id: 'aligned', beehiveId: 'bh2' };
+    const orphan: Recording = { ...rec1, id: 'orphan', beehiveId: 'gone' };
+    const setAll = (recordings: Recording[]) =>
+      dataReducer(emptyState, {
+        type: 'SET_ALL',
+        locations: [loc1, loc2],
+        beehives: [movedHive, bh2],
+        recordings,
+      });
+
+    const once = setAll([orphan, stale, aligned]);
+    expect(once.recordings).toEqual([orphan, { ...stale, locationId: 'loc2' }, aligned]);
+    expect(once.recordings[0]).toBe(orphan);
+    expect(once.recordings[2]).toBe(aligned);
+
+    const twice = setAll(once.recordings);
+    twice.recordings.forEach((r, i) => expect(r).toBe(once.recordings[i]));
+  });
+
+  it('the repair followed by deleting the old location keeps the recordings', () => {
+    const movedHive: Beehive = { ...bh1, locationId: 'loc2' };
+    const repaired = dataReducer(emptyState, {
+      type: 'SET_ALL',
+      locations: [loc1, loc2],
+      beehives: [movedHive],
+      recordings: [rec1],
+    });
+
+    const deleted = dataReducer(repaired, { type: 'DELETE_LOCATION', id: 'loc1' });
+
+    expect(deleted.beehives).toEqual([movedHive]);
+    expect(deleted.recordings).toEqual([{ ...rec1, locationId: 'loc2' }]);
+  });
+});

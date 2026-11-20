@@ -62,6 +62,15 @@ type DataAction =
 
 export { DataState, DataAction };
 
+// Recording.locationId copies its beehive's; re-derive it and keep unchanged items by reference.
+function alignRecordingLocations(beehives: Beehive[], recordings: Recording[]): Recording[] {
+  const locationByBeehive = new Map(beehives.map((b) => [b.id, b.locationId]));
+  return recordings.map((r) => {
+    const locationId = locationByBeehive.get(r.beehiveId);
+    return locationId !== undefined && locationId !== r.locationId ? { ...r, locationId } : r;
+  });
+}
+
 export function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
     case 'SET_LOADING':
@@ -73,7 +82,7 @@ export function dataReducer(state: DataState, action: DataAction): DataState {
         ...state,
         locations: action.locations,
         beehives: action.beehives,
-        recordings: action.recordings,
+        recordings: alignRecordingLocations(action.beehives, action.recordings),
         loading: false,
       };
     case 'ADD_LOCATION':
@@ -92,11 +101,20 @@ export function dataReducer(state: DataState, action: DataAction): DataState {
       };
     case 'ADD_BEEHIVE':
       return { ...state, beehives: [...state.beehives, action.beehive] };
-    case 'UPDATE_BEEHIVE':
+    case 'UPDATE_BEEHIVE': {
+      const { locationId } = action.data;
       return {
         ...state,
         beehives: state.beehives.map((b) => (b.id === action.id ? { ...b, ...action.data } : b)),
+        // Keep updatedAt, so a move never beats newer edits from another device in a merge.
+        recordings:
+          locationId === undefined
+            ? state.recordings
+            : state.recordings.map((r) =>
+                r.beehiveId === action.id && r.locationId !== locationId ? { ...r, locationId } : r,
+              ),
       };
+    }
     case 'DELETE_BEEHIVE':
       return {
         ...state,

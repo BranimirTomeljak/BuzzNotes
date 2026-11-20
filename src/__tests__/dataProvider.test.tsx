@@ -93,6 +93,12 @@ async function renderProvider() {
   });
 }
 
+async function settle() {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 // Seeds pretty-printed JSON, so a compact value read back later proves the provider wrote it.
 async function seedStorage(stored: Stored) {
   await AsyncStorage.multiSet(
@@ -193,5 +199,31 @@ describe('DataProvider', () => {
 
     expect(data.recordings.map((r) => r.id)).toEqual(['rec-b']);
     spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
+  });
+
+  it("a moved beehive's recordings are saved aligned", async () => {
+    const loc2: Location = { ...loc, id: 'loc2', name: 'Grobnik' };
+    await seedStorage({ locations: [loc, loc2], beehives: [hive], recordings: [recA, recB] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.updateBeehive('bh1', { locationId: 'loc2' });
+    });
+    await settle();
+
+    const saved: Recording[] = JSON.parse((await AsyncStorage.getItem(KEYS.recordings))!);
+    expect(saved).toEqual([recA, recB].map((r) => ({ ...r, locationId: 'loc2' })));
+  });
+
+  it('stale stored data is repaired on load and written back', async () => {
+    const loc2: Location = { ...loc, id: 'loc2', name: 'Grobnik' };
+    const movedHive: Beehive = { ...hive, locationId: 'loc2' };
+    await seedStorage({ locations: [loc, loc2], beehives: [movedHive], recordings: [recA, recB] });
+
+    await renderProvider();
+
+    const repaired = [recA, recB].map((r) => ({ ...r, locationId: 'loc2' }));
+    expect(data.recordings).toEqual(repaired);
+    expect(await AsyncStorage.getItem(KEYS.recordings)).toBe(JSON.stringify(repaired));
   });
 });
