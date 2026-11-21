@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Toast from 'react-native-toast-message';
+import Toast, { ErrorToast, ToastConfig } from 'react-native-toast-message';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { loadSavedLanguage } from '../src/i18n';
 import { DataProvider } from '../src/contexts/DataContext';
@@ -12,6 +12,17 @@ import OnboardingScreen from '../src/screens/OnboardingScreen';
 import { colors } from '../src/theme';
 
 const ONBOARDING_KEY = '@buzznotes/onboardingDone';
+
+// The default error toast shows one line, which cuts off long messages such as common.loadError.
+const toastConfig: ToastConfig = {
+  error: (props) => (
+    <ErrorToast
+      {...props}
+      style={{ borderLeftColor: '#FE6301', height: 'auto', minHeight: 60 }}
+      text1NumberOfLines={3}
+    />
+  ),
+};
 
 function RootLayout() {
   const [ready, setReady] = useState(false);
@@ -70,7 +81,7 @@ function RootLayout() {
               </Stack>
             </DataProvider>
           )}
-          <Toast visibilityTime={1500} />
+          <Toast config={toastConfig} visibilityTime={1500} />
         </I18nextProvider>
       </SafeAreaProvider>
       <StatusBar style="light" />
