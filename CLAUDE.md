@@ -173,7 +173,11 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
 
 - **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
-- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Photos stored as `photos/{recordingId}_{index}.jpg`.
+- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Media file names in use (all must keep working):
+  - record flow: `recordings/rec_<ts>.m4a` and `photos/rec_<ts>_<ts2>_<i>.jpg` (the record keeps the temporary `rec_<ts>` id in its file names but gets a UUID)
+  - detail screen: `photos/<id>_<ts>_<i>.jpg`
+  - import: `recordings/<id>.m4a` and `photos/<id>_<i>.jpg`
+  - older files: `photos/rec_<ts>_<i>.jpg` and `photos/<id>_<n>.jpg`
 - **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
 - **`useDetailTabBar`** (`src/hooks/`) — Shared pill-style tab bar for detail screens. Returns `{ renderTabBar }`. No arguments needed.
 - **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
@@ -253,6 +257,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **AsyncStorage limits on Android**: the database is capped at 6 MiB, and a single value larger than about 2 MiB cannot be read back (CursorWindow limit). `saveLocalData` refuses to write a recordings value over 1,900,000 UTF-8 bytes (error code `STORAGE_FULL`), and `DataProvider` shows `common.storageFull` instead of the generic `common.saveError`. Nothing saves until recordings are deleted.
 - **Stored data version**: there is no `@buzznotes/schemaVersion` key yet; once one exists, a missing key means v1.
 - **One toast at a time**: react-native-toast-message replaces the visible toast. On Fabric a tap's dispatch commits and runs effects before the handler's `await` resumes, so a toast shown from an effect is replaced by the handler's own toast. Defer such toasts with `setTimeout(..., 0)`, as the failed-load warning in the persist effect does.
+- **File.copy never overwrites**: on Android `File.copy` throws if the target exists, while `File.write` creates or truncates. New media names must be unique, which is why `savePhoto` adds `Date.now()`.
 - **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap to three lines through `toastConfig` in `app/_layout.tsx`, so keep success and info texts short.
 - **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
 - **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.
