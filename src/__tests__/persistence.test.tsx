@@ -1,4 +1,4 @@
-import React, { act } from 'react';
+import React, { act, useLayoutEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { DataProvider, useData } from '../contexts/DataContext';
@@ -6,7 +6,10 @@ import { importData } from '../services/exportImport';
 import { Beehive, Location, Priority, Recording } from '../models/types';
 
 const { create } = require('react-test-renderer') as {
-  create: (el: React.ReactElement) => { unmount: () => void };
+  create: (el: React.ReactElement) => {
+    unmount: () => void;
+    update: (el: React.ReactElement) => void;
+  };
 };
 
 jest.mock('../i18n', () => ({ __esModule: true, default: { t: (key: string) => key } }));
@@ -64,10 +67,22 @@ const loadErrorToast = { type: 'error', text1: 'common.loadError', visibilityTim
 const saveErrorToast = { type: 'error', text1: 'common.saveError', visibilityTime: 3000 };
 
 let data: ReturnType<typeof useData>;
-let renderer: { unmount: () => void } | undefined;
+let renderer: ReturnType<typeof create> | undefined;
 
 function Probe() {
   data = useData();
+  return null;
+}
+
+// Like a screen's add handler on Fabric: the tap's dispatch commits at once, then it shows a toast.
+function AddLocationLikeScreen() {
+  const { addLocation } = useData();
+  useLayoutEffect(() => {
+    (async () => {
+      await addLocation('Novo');
+      Toast.show({ type: 'success', text1: 'common.success' });
+    })();
+  }, [addLocation]);
   return null;
 }
 
@@ -171,6 +186,25 @@ describe('DataProvider persistence', () => {
     await run(() => data.addLocation('Novo'));
 
     expect(toasts()).toEqual([loadErrorToast, loadErrorToast]);
+    await expectNothingWritten();
+  });
+
+  it("while stuck, the warning lands after a screen's own success toast", async () => {
+    failRead('@buzznotes/beehives');
+    await renderProvider();
+
+    await act(async () => {
+      renderer!.update(
+        <DataProvider>
+          <Probe />
+          <AddLocationLikeScreen />
+        </DataProvider>,
+      );
+    });
+    await settle();
+
+    expect(data.locations.map((l) => l.name)).toEqual(['Novo']);
+    expect(toasts().at(-1)).toEqual(loadErrorToast);
     await expectNothingWritten();
   });
 

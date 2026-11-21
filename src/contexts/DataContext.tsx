@@ -216,7 +216,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Never save before a successful load, or the in-memory state would overwrite stored data.
     if (state.loading) {
-      if (loadFailedRef.current) showLoadError();
+      // Deferred so it replaces, not precedes, a screen's own toast for the same tap.
+      if (loadFailedRef.current) setTimeout(showLoadError, 0);
       return;
     }
     saveLocalData(state.locations, state.beehives, state.recordings).catch(() => {
