@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Location, Beehive, Recording, Priority } from '../models/types';
 import { loadLocalData, saveLocalData, STORAGE_FULL } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
-import { deletePhotos } from '../services/photoStorage';
+import { deleteRecordingFiles } from '../services/photoStorage';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -191,6 +191,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     syncing: false,
   });
+  // Lets stable callbacks such as deleteRecording read the current recordings.
+  const recordingsRef = useRef(state.recordings);
+  recordingsRef.current = state.recordings;
 
   // Load local data on mount
   useEffect(() => {
@@ -313,7 +316,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteRecording = useCallback(async (id: string) => {
-    deletePhotos(id);
+    recordingsRef.current.filter((r) => r.id === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_RECORDING', id });
   }, []);
 

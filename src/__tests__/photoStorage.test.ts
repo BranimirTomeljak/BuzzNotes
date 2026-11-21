@@ -1,11 +1,21 @@
 import { Platform } from 'react-native';
-import { deletePhoto, savePhoto } from '../services/photoStorage';
+import {
+  deletePhoto,
+  deleteRecordingFiles,
+  isAppMediaPath,
+  savePhoto,
+} from '../services/photoStorage';
 import { Directory, File, fakeFs } from '../testUtils/fakeFileSystem';
+import { Priority, Recording } from '../models/types';
 
 jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'));
 
-const PHOTOS = 'file:///data/user/0/app/files/photos/';
+const DOC = 'file:///data/user/0/app/files';
+const PHOTOS = `${DOC}/photos/`;
+const RECORDINGS = `${DOC}/recordings/`;
 const PICKED = 'file:///data/user/0/app/cache/ImagePicker/IMG_0001.jpg';
+const DATABASE = 'file:///data/user/0/app/databases/RKStorage';
+const UUID = '6f1c2a4e-9b3d-4c7a-8e21-5d0f3b9a7c11';
 
 function pick(n: number): string {
   const uri = `file:///data/user/0/app/cache/ImagePicker/IMG_${n}.jpg`;
@@ -70,6 +80,81 @@ describe('photoStorage', () => {
 
     expect(() => deletePhoto(`${PHOTOS}r1_1.jpg`)).not.toThrow();
     expect(fakeFs.list()).toEqual([`${PHOTOS}r1_0.jpg`]);
+  });
+
+  it('the guard refuses paths outside the two folders, the folders themselves, and crafted names', () => {
+    const refused = [
+      DATABASE,
+      `${DOC}/r1.m4a`,
+      `${DOC}/photosx/r1_0.jpg`,
+      PICKED,
+      PHOTOS,
+      RECORDINGS,
+      `${DOC}/photos`,
+      `${PHOTOS}../recordings/r1.m4a`,
+      `${PHOTOS}%2e%2e/recordings/r1.m4a`,
+      `${PHOTOS}..%2Frecordings%2Fr1.m4a`,
+      `${PHOTOS}r1_0.jpg?x`,
+      `${PHOTOS}r1_0.jpg#x`,
+      `${PHOTOS}r1_0.jpeg`,
+      `${PHOTOS}r1_0.JPG`,
+      '',
+    ];
+
+    expect(refused.filter((uri) => isAppMediaPath(uri))).toEqual([]);
+  });
+
+  it('deletePhoto refuses a crafted path that resolves to another app file', () => {
+    fakeFs.seed(DATABASE, 'DB');
+    fakeFs.seed(`${RECORDINGS}r1.m4a`, 'AUDIO');
+
+    deletePhoto(`${PHOTOS}..%2F..%2Fdatabases%2FRKStorage`);
+    deletePhoto(`${PHOTOS}..%2Frecordings%2Fr1.m4a`);
+    deletePhoto(DATABASE);
+
+    expect(fakeFs.read(DATABASE)).toBe('DB');
+    expect(fakeFs.read(`${RECORDINGS}r1.m4a`)).toBe('AUDIO');
+  });
+
+  it('names from step 7 and the older schemes pass the guard', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+    const accepted = [
+      savePhoto(pick(0), UUID, 0),
+      savePhoto(pick(1), 'rec_1700000000000', 1),
+      `${RECORDINGS}rec_1700000000000.m4a`,
+      `${RECORDINGS}${UUID}.m4a`,
+      `${PHOTOS}${UUID}_2.jpg`,
+      `${PHOTOS}rec_1700000000000_0.jpg`,
+    ];
+
+    expect(accepted.filter((uri) => !isAppMediaPath(uri))).toEqual([]);
+  });
+
+  it('on web, deleteRecordingFiles makes no file calls', () => {
+    jest.replaceProperty(Platform, 'OS', 'web');
+    const spies = [
+      jest.spyOn(File.prototype, 'validatePath'),
+      jest.spyOn(Directory.prototype, 'validatePath'),
+    ];
+    const webRecording: Recording = {
+      id: 'r1',
+      beehiveId: 'bh1',
+      locationId: 'loc1',
+      userId: 'u1',
+      audioUrl: '',
+      localPath: 'blob:http://localhost:8081/a1',
+      duration: 1,
+      priority: Priority.LOW,
+      solved: false,
+      lastListenedAt: null,
+      photos: ['blob:http://localhost:8081/a2'],
+      createdAt: 1,
+      updatedAt: 1,
+    };
+
+    deleteRecordingFiles(webRecording);
+
+    spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
   });
 
   it('on web, savePhoto returns the source URI without touching files', () => {

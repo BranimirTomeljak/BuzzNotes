@@ -1,8 +1,19 @@
 import { Paths, File, Directory } from 'expo-file-system';
 import { Platform } from 'react-native';
+import { Recording } from '../models/types';
+
+const MEDIA_NAME = /^[\w-]+\.(m4a|jpg)$/;
 
 function getPhotosDir(): Directory {
   return new Directory(Paths.document, 'photos');
+}
+
+// True only for a file directly in documents/recordings or documents/photos; crafted paths fail.
+export function isAppMediaPath(uri: string): boolean {
+  if (typeof uri !== 'string') return false;
+  return [new Directory(Paths.document, 'recordings').uri, getPhotosDir().uri].some(
+    (dir) => uri.startsWith(dir) && MEDIA_NAME.test(uri.slice(dir.length)),
+  );
 }
 
 export function ensurePhotosDir(): Directory {
@@ -21,21 +32,15 @@ export function savePhoto(sourceUri: string, recordingId: string, index: number)
   return destFile.uri;
 }
 
-export function deletePhotos(recordingId: string): void {
-  if (Platform.OS === 'web') return;
-  const dir = getPhotosDir();
-  if (!dir.exists) return;
-  const files = dir.list();
-  for (const item of files) {
-    if (item instanceof File && item.name?.startsWith(`${recordingId}_`)) {
-      item.delete();
-    }
-  }
+export function deleteRecordingFiles(recording: Recording): void {
+  const photos = Array.isArray(recording.photos) ? recording.photos : [];
+  [recording.localPath, ...photos].forEach((path) => deletePhoto(path));
 }
 
 export function deletePhoto(photoPath: string): void {
   if (Platform.OS === 'web') return;
   try {
+    if (!isAppMediaPath(photoPath)) return;
     const file = new File(photoPath);
     if (file.exists) file.delete();
   } catch {

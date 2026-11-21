@@ -201,6 +201,131 @@ describe('DataProvider', () => {
     spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
   });
 
+  it('deleting a record-flow recording removes its rec_<ts> audio and photos', async () => {
+    const recFlow = recording(
+      '6f1c2a4e-9b3d-4c7a-8e21-5d0f3b9a7c11',
+      `${DOC}/recordings/rec_1700000007000.m4a`,
+      [
+        `${DOC}/photos/rec_1700000007000_1700000007100_0.jpg`,
+        `${DOC}/photos/rec_1700000007000_1700000007100_1.jpg`,
+      ],
+    );
+    const files = [recFlow.localPath, ...recFlow.photos!];
+    const otherFiles = [recB.localPath, ...recB.photos!];
+    for (const uri of [...files, ...otherFiles]) fakeFs.seed(uri, uri);
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recFlow, recB] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.deleteRecording(recFlow.id);
+    });
+
+    for (const uri of files) expect(fakeFs.read(uri)).toBeUndefined();
+    for (const uri of otherFiles) expect(fakeFs.read(uri)).toBe(uri);
+  });
+
+  it('a record with mixed naming schemes is fully deleted', async () => {
+    const mixed = { ...recA, photos: [...recA.photos!, `${DOC}/photos/rec-a_1700000008000_2.jpg`] };
+    for (const uri of [mixed.localPath, ...mixed.photos]) fakeFs.seed(uri, uri);
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [mixed] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.deleteRecording('rec-a');
+    });
+
+    expect(fakeFs.list()).toEqual([]);
+  });
+
+  it('files that are already missing do not cause a throw', async () => {
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.deleteRecording('rec-a');
+    });
+
+    expect(data.recordings).toEqual([]);
+  });
+
+  it('a legacy record without photos is deleted cleanly', async () => {
+    const legacy = {
+      id: 'r0',
+      beehiveId: 'bh1',
+      locationId: 'loc1',
+      userId: 'u1',
+      audioUrl: '',
+      localPath: `${DOC}/recordings/rec_1770500000000.m4a`,
+      date: '08.02.2026',
+      duration: 7,
+      priority: 'LOW',
+      solved: false,
+      lastListenedAt: null,
+      createdAt: 1770500000000,
+      updatedAt: 1770500000000,
+    };
+    fakeFs.seed(legacy.localPath, 'AUDIO');
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [legacy] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.deleteRecording('r0');
+    });
+
+    expect(data.recordings).toEqual([]);
+    expect(fakeFs.list()).toEqual([]);
+  });
+
+  it('an empty or undefined localPath causes no throw', async () => {
+    const empty = recording('rec-e', '', []);
+    const missing = { ...recording('rec-u', '', []), localPath: undefined };
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [empty, missing] });
+    await renderProvider();
+
+    await act(async () => {
+      await data.deleteRecording('rec-e');
+      await data.deleteRecording('rec-u');
+    });
+
+    expect(data.recordings).toEqual([]);
+  });
+
+  it('an unknown id makes no file calls', async () => {
+    for (const uri of [recA.localPath, ...recA.photos!]) fakeFs.seed(uri, uri);
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+    const spies = [
+      jest.spyOn(File.prototype, 'validatePath'),
+      jest.spyOn(Directory.prototype, 'validatePath'),
+    ];
+
+    await act(async () => {
+      await data.deleteRecording('nope');
+    });
+
+    spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
+    expect(data.recordings).toEqual([recA]);
+  });
+
+  it('a delete captured before a photo was added still deletes that photo', async () => {
+    for (const uri of [recA.localPath, ...recA.photos!]) fakeFs.seed(uri, uri);
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+    const capturedDelete = data.deleteRecording;
+    const added = `${DOC}/photos/rec-a_1700000009000_2.jpg`;
+    fakeFs.seed(added, added);
+
+    await act(async () => {
+      await data.updateRecording('rec-a', { photos: [...recA.photos!, added] });
+    });
+    await act(async () => {
+      await capturedDelete('rec-a');
+    });
+
+    expect(data.deleteRecording).toBe(capturedDelete);
+    expect(fakeFs.list()).toEqual([]);
+  });
+
   it("a moved beehive's recordings are saved aligned", async () => {
     const loc2: Location = { ...loc, id: 'loc2', name: 'Grobnik' };
     await seedStorage({ locations: [loc, loc2], beehives: [hive], recordings: [recA, recB] });

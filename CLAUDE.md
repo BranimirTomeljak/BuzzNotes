@@ -148,7 +148,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Notes section with inline edit (pencil icon toggles edit mode)
 - Photo grid (2 columns) with camera/gallery add buttons and remove buttons
 - Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList), pinch-to-zoom (1x–5x), double-tap to toggle 2x zoom, and "1 / N" counter
-- Deleting a recording also deletes its photos from disk (`deletePhotos`)
+- Deleting a recording deletes its audio and photos by their stored paths; deletes are limited to the app's media folders (`deleteRecordingFiles`, guarded by `isAppMediaPath`)
 
 ### Audio Player
 - Play/pause button (44x44 circle), slider with draggable thumb (16px), time display
@@ -173,7 +173,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
 
 - **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
-- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Media file names in use (all must keep working):
+- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deleteRecordingFiles`, `isAppMediaPath`, `ensurePhotosDir`. `isAppMediaPath` accepts only a `[\w-]+.(m4a|jpg)` name directly inside `documents/recordings/` or `documents/photos/`, and `deletePhoto` deletes nothing else. Media file names in use (all must keep working):
   - record flow: `recordings/rec_<ts>.m4a` and `photos/rec_<ts>_<ts2>_<i>.jpg` (the record keeps the temporary `rec_<ts>` id in its file names but gets a UUID)
   - detail screen: `photos/<id>_<ts>_<i>.jpg`
   - import: `recordings/<id>.m4a` and `photos/<id>_<i>.jpg`
@@ -258,6 +258,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Stored data version**: there is no `@buzznotes/schemaVersion` key yet; once one exists, a missing key means v1.
 - **One toast at a time**: react-native-toast-message replaces the visible toast. On Fabric a tap's dispatch commits and runs effects before the handler's `await` resumes, so a toast shown from an effect is replaced by the handler's own toast. Defer such toasts with `setTimeout(..., 0)`, as the failed-load warning in the persist effect does.
 - **File.copy never overwrites**: on Android `File.copy` throws if the target exists, while `File.write` creates or truncates. New media names must be unique, which is why `savePhoto` adds `Date.now()`.
+- **Media deletes come first**: deleting a recording removes its files before the record. If that save then fails (for example `STORAGE_FULL`), the record comes back after a restart without its files; this is accepted. Orphaned files that older versions left behind are never swept.
 - **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap to three lines through `toastConfig` in `app/_layout.tsx`, so keep success and info texts short.
 - **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
 - **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.
