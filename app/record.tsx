@@ -118,25 +118,33 @@ export default function RecordScreen() {
   }, [recorder, t]);
 
   const handleTakePhoto = useCallback(async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUris((prev) => [...prev, result.assets[0].uri]);
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setPhotoUris((prev) => [...prev, result.assets[0].uri]);
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, []);
+  }, [t]);
 
   const handlePickPhoto = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-    });
-    if (!result.canceled) {
-      setPhotoUris((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        setPhotoUris((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, []);
+  }, [t]);
 
   const handleRemovePhoto = useCallback((index: number) => {
     setPhotoUris((prev) => prev.filter((_, i) => i !== index));

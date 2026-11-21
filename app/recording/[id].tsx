@@ -25,6 +25,7 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
 import { useData } from '../../src/contexts/DataContext';
 import { savePhoto, deletePhoto } from '../../src/services/photoStorage';
 import AudioPlayer from '../../src/components/AudioPlayer';
@@ -193,30 +194,38 @@ export default function RecordingDetail() {
 
   const handleTakePhoto = useCallback(async () => {
     if (!recording) return;
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const photos = recording.photos || [];
-      const newPath = savePhoto(result.assets[0].uri, id, photos.length);
-      updateRecording(id, { photos: [...photos, newPath] });
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const photos = recording.photos || [];
+        const newPath = savePhoto(result.assets[0].uri, id, photos.length);
+        updateRecording(id, { photos: [...photos, newPath] });
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, [recording, id, updateRecording]);
+  }, [recording, id, updateRecording, t]);
 
   const handlePickPhoto = useCallback(async () => {
     if (!recording) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-    });
-    if (!result.canceled) {
-      const photos = recording.photos || [];
-      const newPaths = result.assets.map((a, i) => savePhoto(a.uri, id, photos.length + i));
-      updateRecording(id, { photos: [...photos, ...newPaths] });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        const photos = recording.photos || [];
+        const newPaths = result.assets.map((a, i) => savePhoto(a.uri, id, photos.length + i));
+        updateRecording(id, { photos: [...photos, ...newPaths] });
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, [recording, id, updateRecording]);
+  }, [recording, id, updateRecording, t]);
 
   const handleRemovePhoto = useCallback(
     (index: number) => {

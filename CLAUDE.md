@@ -146,7 +146,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Priority badge (tap to cycle) + solved toggle chip
 - Audio player with priority tint (or muted if solved)
 - Notes section with inline edit (pencil icon toggles edit mode)
-- Photo grid (2 columns) with camera/gallery add buttons and remove buttons
+- Photo grid (2 columns) with camera/gallery add buttons and remove buttons; camera and gallery errors (for example a denied permission) show `common.error` here and on the record screen
 - Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList), pinch-to-zoom (1x–5x), double-tap to toggle 2x zoom, and "1 / N" counter
 - Deleting a recording deletes its audio and photos by their stored paths; deletes are limited to the app's media folders (`deleteRecordingFiles`, guarded by `isAppMediaPath`)
 
