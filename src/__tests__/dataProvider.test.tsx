@@ -73,6 +73,22 @@ const recB = recording('rec-b', `${DOC}/recordings/rec_1700000009000.m4a`, [
   `${DOC}/photos/rec-b_1.jpg`,
 ]);
 
+const loc2: Location = { ...loc, id: 'loc2', name: 'Grobnik' };
+const hive2: Beehive = { ...hive, id: 'bh2', name: 'Hive 2' };
+const hive3: Beehive = { ...hive, id: 'bh3', name: 'Hive 3', locationId: 'loc2' };
+const recC: Recording = {
+  ...recording('rec-c', `${DOC}/recordings/rec_1700000011000.m4a`, [
+    `${DOC}/photos/rec-c_1700000011100_0.jpg`,
+  ]),
+  beehiveId: 'bh2',
+};
+const recD: Recording = {
+  ...recording('rec-d', `${DOC}/recordings/rec-d.m4a`, [`${DOC}/photos/rec-d_0.jpg`]),
+  beehiveId: 'bh3',
+  locationId: 'loc2',
+};
+const filesOf = (r: Recording) => [r.localPath, ...(r.photos ?? [])];
+
 function backup(recordings: object[]): string {
   return JSON.stringify({
     version: 1,
@@ -102,6 +118,13 @@ async function renderProvider() {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
+}
+
+async function renderCascade() {
+  const all = [recA, recB, recC, recD];
+  for (const uri of all.flatMap(filesOf)) fakeFs.seed(uri, uri);
+  await seedStorage({ locations: [loc, loc2], beehives: [hive, hive2, hive3], recordings: all });
+  await renderProvider();
 }
 
 async function settle() {
@@ -372,6 +395,77 @@ describe('DataProvider', () => {
     });
 
     expect(fakeFs.list(DOC)).toEqual([]);
+  });
+
+  it('a cascade deletes exactly the files of the recordings the reducer drops', async () => {
+    await renderCascade();
+
+    await act(async () => {
+      await data.deleteBeehive('bh2');
+    });
+    expect(data.recordings.map((r) => r.id)).toEqual(['rec-a', 'rec-b', 'rec-d']);
+    expect(fakeFs.list(DOC)).toEqual(data.recordings.flatMap(filesOf).sort());
+
+    await act(async () => {
+      await data.deleteLocation('loc1');
+    });
+    expect(data.recordings.map((r) => r.id)).toEqual(['rec-d']);
+    expect(fakeFs.list(DOC)).toEqual(data.recordings.flatMap(filesOf).sort());
+  });
+
+  it("deleting a location leaves another location's files", async () => {
+    await renderCascade();
+
+    await act(async () => {
+      await data.deleteLocation('loc1');
+    });
+
+    for (const uri of filesOf(recD)) expect(fakeFs.read(uri)).toBe(uri);
+  });
+
+  it("after a move, deleting the old location keeps the moved beehive's files", async () => {
+    await renderCascade();
+
+    await act(async () => {
+      await data.updateBeehive('bh1', { locationId: 'loc2' });
+    });
+    await act(async () => {
+      await data.deleteLocation('loc1');
+    });
+
+    expect(fakeFs.list(DOC)).toEqual([recA, recB, recD].flatMap(filesOf).sort());
+  });
+
+  it('deleting a location with no recordings makes no file calls', async () => {
+    const empty: Location = { ...loc, id: 'loc3', name: 'Prazna' };
+    await seedStorage({ locations: [loc, empty], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+    const spies = [
+      jest.spyOn(File.prototype, 'validatePath'),
+      jest.spyOn(Directory.prototype, 'validatePath'),
+    ];
+
+    await act(async () => {
+      await data.deleteLocation('loc3');
+    });
+
+    spies.forEach((spy) => expect(spy).not.toHaveBeenCalled());
+  });
+
+  it('one bad path does not stop the rest of a cascade', async () => {
+    await renderCascade();
+    const failing = recA.photos![0];
+    const realDelete = File.prototype.delete;
+    jest.spyOn(File.prototype, 'delete').mockImplementation(function (this: File) {
+      if (this.uri === failing) throw new Error('EIO');
+      realDelete.call(this);
+    });
+
+    await act(async () => {
+      await data.deleteBeehive('bh1');
+    });
+
+    expect(fakeFs.list(DOC)).toEqual([failing, ...[recC, recD].flatMap(filesOf)].sort());
   });
 
   it("a moved beehive's recordings are saved aligned", async () => {

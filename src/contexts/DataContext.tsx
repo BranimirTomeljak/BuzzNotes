@@ -253,6 +253,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteLocation = useCallback(async (id: string) => {
+    // Same predicate as DELETE_LOCATION, so only the recordings the reducer drops lose their files.
+    recordingsRef.current.filter((r) => r.locationId === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_LOCATION', id });
   }, []);
 
@@ -275,6 +277,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteBeehive = useCallback(async (id: string) => {
+    // Same predicate as DELETE_BEEHIVE in dataReducer.
+    recordingsRef.current.filter((r) => r.beehiveId === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_BEEHIVE', id });
   }, []);
 
