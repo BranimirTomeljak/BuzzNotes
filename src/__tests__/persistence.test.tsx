@@ -267,6 +267,40 @@ describe('DataProvider persistence', () => {
     expect(data.locations.find((l) => l.name === 'Novo')?.userId).toBe('u1');
   });
 
+  it('a refresh that fails to read the user id again stays stuck and writes nothing', async () => {
+    failRead(USER_ID_KEY);
+    await renderProvider();
+
+    await run(() => data.refreshData());
+
+    expect(data.loading).toBe(true);
+    expect(toasts()).toEqual([loadErrorToast, loadErrorToast]);
+    await expectNothingWritten();
+  });
+
+  it('a refresh during the first load does not read the user id a second time', async () => {
+    let release!: () => void;
+    const userIdRead = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    storage.getItem.mockImplementation(async (k: string) => {
+      if (k === USER_ID_KEY) await userIdRead;
+      return realGetItem(k);
+    });
+    await renderProvider();
+
+    let refresh!: Promise<void>;
+    await act(async () => {
+      refresh = data.refreshData();
+    });
+    release();
+    await run(() => refresh);
+
+    expect(storage.getItem.mock.calls.filter(([key]) => key === USER_ID_KEY)).toHaveLength(1);
+    expect(data.loading).toBe(false);
+    expect(Toast.show).not.toHaveBeenCalled();
+  });
+
   // jest-circus fails a test that leaves an unhandled rejection, so passing proves there is none.
   it('a rejected multiSet shows saveError once with no unhandled rejection', async () => {
     await renderProvider();
