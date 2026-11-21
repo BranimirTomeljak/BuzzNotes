@@ -116,5 +116,7 @@ export default {
     importError: 'Error importing data',
     loadError: 'Could not read saved data. Nothing was overwritten; pull down to retry',
     saveError: 'Changes could not be saved',
+    storageFull:
+      'Storage is full and changes are not saved. Export a backup, then delete old recordings',
   },
 };

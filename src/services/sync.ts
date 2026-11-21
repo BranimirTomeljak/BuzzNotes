@@ -9,6 +9,7 @@ const KEYS = {
 
 // Android's CursorWindow cannot read back a value much over 2 MiB, so never write one.
 const MAX_RECORDINGS_BYTES = 1_900_000;
+export const STORAGE_FULL = 'STORAGE_FULL';
 
 // Local storage operations
 export async function loadLocalData(): Promise<{
@@ -36,7 +37,7 @@ export async function saveLocalData(
 ): Promise<void> {
   const recordingsJson = JSON.stringify(recordings);
   if (new TextEncoder().encode(recordingsJson).length > MAX_RECORDINGS_BYTES) {
-    throw new Error('Recordings data is too large to save');
+    throw Object.assign(new Error('Recordings data is too large to save'), { code: STORAGE_FULL });
   }
   await AsyncStorage.multiSet([
     [KEYS.locations, JSON.stringify(locations)],

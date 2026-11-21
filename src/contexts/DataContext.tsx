@@ -10,7 +10,7 @@ import React, {
 import { randomUUID } from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Location, Beehive, Recording, Priority } from '../models/types';
-import { loadLocalData, saveLocalData } from '../services/sync';
+import { loadLocalData, saveLocalData, STORAGE_FULL } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
 import { deletePhotos } from '../services/photoStorage';
 import Toast from 'react-native-toast-message';
@@ -220,9 +220,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       if (loadFailedRef.current) setTimeout(showLoadError, 0);
       return;
     }
-    saveLocalData(state.locations, state.beehives, state.recordings).catch(() => {
-      Toast.show({ type: 'error', text1: i18n.t('common.saveError'), visibilityTime: 3000 });
-    });
+    saveLocalData(state.locations, state.beehives, state.recordings).catch(
+      (e: { code?: string }) => {
+        const full = e?.code === STORAGE_FULL;
+        Toast.show({
+          type: 'error',
+          text1: i18n.t(full ? 'common.storageFull' : 'common.saveError'),
+          visibilityTime: full ? 6000 : 3000,
+        });
+      },
+    );
   }, [state.locations, state.beehives, state.recordings, state.loading]);
 
   const addLocation = useCallback(async (name: string): Promise<Location> => {

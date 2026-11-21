@@ -65,6 +65,7 @@ const SEEDED = [[loc], [hive], [rec]].map((slice) => JSON.stringify(slice, null,
 
 const loadErrorToast = { type: 'error', text1: 'common.loadError', visibilityTime: 6000 };
 const saveErrorToast = { type: 'error', text1: 'common.saveError', visibilityTime: 3000 };
+const storageFullToast = { type: 'error', text1: 'common.storageFull', visibilityTime: 6000 };
 
 let data: ReturnType<typeof useData>;
 let renderer: ReturnType<typeof create> | undefined;
@@ -336,14 +337,14 @@ describe('DataProvider persistence', () => {
     expect(storage.multiSet.mock.calls[0][0].map(([key]) => key)).toEqual(KEYS);
   });
 
-  it('notes of 1,000,000 č characters are rejected, show saveError and write nothing', async () => {
+  it('notes of 1,000,000 č characters are rejected, say storage is full and write nothing', async () => {
     await renderProvider();
     const before = await stored();
     jest.clearAllMocks();
 
     await run(() => data.updateRecording('rec1', { notes: 'č'.repeat(1_000_000) }));
 
-    expect(toasts()).toEqual([saveErrorToast]);
+    expect(toasts()).toEqual([storageFullToast]);
     expect(storage.setItem).not.toHaveBeenCalled();
     expect(storage.multiSet).not.toHaveBeenCalled();
     expect(await stored()).toEqual(before);
