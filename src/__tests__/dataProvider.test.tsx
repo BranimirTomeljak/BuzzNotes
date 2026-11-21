@@ -1,6 +1,7 @@
 import React, { act } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import { DataProvider, useData } from '../contexts/DataContext';
 import { Directory, File, fakeFs } from '../testUtils/fakeFileSystem';
 import { Beehive, Location, Priority, Recording } from '../models/types';
@@ -395,6 +396,43 @@ describe('DataProvider', () => {
     });
 
     expect(fakeFs.list(DOC)).toEqual([]);
+  });
+
+  it('cancelling the import picker shows no toast and resets syncing', async () => {
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+    jest.mocked(Toast.show).mockClear();
+    File.pickFileAsync.mockRejectedValueOnce(
+      Object.assign(new Error('The file picker was cancelled by the user'), {
+        code: 'ERR_PICKER_CANCELLED',
+      }),
+    );
+
+    await act(async () => {
+      await data.importAllData();
+    });
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(data.syncing).toBe(false);
+    expect(data.recordings).toEqual([recA]);
+  });
+
+  it('any other picker rejection still shows importError', async () => {
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [recA] });
+    await renderProvider();
+    jest.mocked(Toast.show).mockClear();
+    File.pickFileAsync.mockRejectedValueOnce(
+      Object.assign(new Error('No activity'), { code: 'ERR_MISSING_ACTIVITY' }),
+    );
+
+    await act(async () => {
+      await data.importAllData();
+    });
+
+    expect(jest.mocked(Toast.show).mock.calls.map(([options]) => options.text1)).toEqual([
+      'common.importError',
+    ]);
+    expect(data.syncing).toBe(false);
   });
 
   it('a cascade deletes exactly the files of the recordings the reducer drops', async () => {

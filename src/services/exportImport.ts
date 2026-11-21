@@ -93,8 +93,13 @@ export async function importData(existing: Recording[] = []): Promise<{
   beehives: Beehive[];
   recordings: Recording[];
 } | null> {
-  // Pick a file
-  const picked = await File.pickFileAsync(undefined, 'application/json');
+  // Pick a file; a cancelled pick rejects with ERR_PICKER_CANCELLED instead of resolving to nothing.
+  const picked = await File.pickFileAsync(undefined, 'application/json').catch(
+    (e: { code?: string }) => {
+      if (e?.code === 'ERR_PICKER_CANCELLED') return null;
+      throw e;
+    },
+  );
   if (!picked) return null;
 
   const file = Array.isArray(picked) ? picked[0] : picked;

@@ -192,7 +192,7 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 ### Export/Import
 - Export creates a `.buzznotes.json` file with all data + audio files + photos encoded as base64
 - Uses `expo-sharing` to share via email, Drive, Bluetooth, etc.
-- Import uses `File.pickFileAsync()` from expo-file-system to select a file
+- Import uses `File.pickFileAsync()` from expo-file-system to select a file. A cancelled pick rejects with code `ERR_PICKER_CANCELLED` (it never resolves to null); `importData` turns that into `null`, so no error toast appears
 - Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths
 - Merge strategy: imported items with same ID update existing (by updatedAt); new items are added
 - Import writes no media for a record whose local copy is newer (`importData(existing)` skips it when `local.updatedAt > incoming.updatedAt`, the exact complement of the merge's `>=`), so an older backup never overwrites newer photos or audio
