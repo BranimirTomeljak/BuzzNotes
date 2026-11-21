@@ -88,7 +88,7 @@ export async function exportData(
   });
 }
 
-export async function importData(): Promise<{
+export async function importData(existing: Recording[] = []): Promise<{
   locations: Location[];
   beehives: Beehive[];
   recordings: Recording[];
@@ -116,8 +116,12 @@ export async function importData(): Promise<{
     }
 
     const photosDir = ensurePhotosDir();
+    const localById = new Map(existing.map((r) => [r.id, r]));
 
     for (const rec of data.recordings) {
+      const local = localById.get(rec.id);
+      // importAllData's merge keeps a newer local record (incoming wins on >=); keep its media too.
+      if (local && local.updatedAt > rec.updatedAt) continue;
       if (rec.audioBase64) {
         const destFile = new File(recordingsDir, `${rec.id}.m4a`);
         destFile.write(rec.audioBase64, { encoding: 'base64' });

@@ -372,7 +372,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
-      const imported = await importData();
+      const imported = await importData(state.recordings);
       if (!imported) {
         dispatch({ type: 'SET_SYNCING', syncing: false });
         return;

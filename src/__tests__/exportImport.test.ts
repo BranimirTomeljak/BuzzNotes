@@ -207,3 +207,75 @@ describe('importData', () => {
     expect(fakeFs.list()).toEqual([PICKED_URI]);
   });
 });
+
+describe('importData with existing records', () => {
+  const incoming = { ...rec, audioBase64: 'QVVESU8=', photosBase64: ['UEhPVE8='] };
+  const v1 = (recordings: object[]) =>
+    JSON.stringify({ version: 1, exportedAt: 1, locations: [loc], beehives: [hive], recordings });
+
+  async function importWith(existing: Recording[], json: string) {
+    fakeFs.seed(PICKED_URI, json);
+    File.pickFileAsync.mockResolvedValueOnce(new File(PICKED_URI));
+    return importData(existing);
+  }
+
+  it('a newer local record keeps its photo bytes', async () => {
+    const local = {
+      ...rec,
+      updatedAt: 3000,
+      localPath: `${DOC}/recordings/r1.m4a`,
+      photos: [`${DOC}/photos/r1_0.jpg`],
+    };
+    fakeFs.seed(local.localPath, 'LOCAL-AUDIO');
+    fakeFs.seed(local.photos[0], 'LOCAL-PHOTO');
+
+    await importWith([local], v1([incoming]));
+
+    expect(fakeFs.read(local.localPath)).toBe('LOCAL-AUDIO');
+    expect(fakeFs.read(local.photos[0])).toBe('LOCAL-PHOTO');
+  });
+
+  it('on equal updatedAt, the incoming media are still written', async () => {
+    const local = { ...rec, photos: [`${DOC}/photos/r1_0.jpg`] };
+    fakeFs.seed(local.photos[0], 'LOCAL-PHOTO');
+
+    await importWith([local], v1([incoming]));
+
+    expect(fakeFs.read(`${DOC}/recordings/r1.m4a`)).toBe('AUDIO');
+    expect(fakeFs.read(`${DOC}/photos/r1_0.jpg`)).toBe('PHOTO');
+  });
+
+  it('a record absent locally is written', async () => {
+    await importWith([{ ...rec, id: 'r9', updatedAt: 9000 }], v1([incoming]));
+
+    expect(fakeFs.read(`${DOC}/recordings/r1.m4a`)).toBe('AUDIO');
+    expect(fakeFs.read(`${DOC}/photos/r1_0.jpg`)).toBe('PHOTO');
+  });
+
+  it('importing the same file twice is idempotent', async () => {
+    const first = await importWith([], v1([incoming]));
+    const filesAfterFirst = fakeFs.list();
+
+    const second = await importWith(first!.recordings, v1([incoming]));
+
+    expect(second).toEqual(first);
+    expect(fakeFs.list()).toEqual(filesAfterFirst);
+    expect(fakeFs.read(`${DOC}/photos/r1_0.jpg`)).toBe('PHOTO');
+  });
+
+  it('a record-flow record with an old-style <id>_2.jpg is not overwritten', async () => {
+    const local = {
+      ...rec,
+      updatedAt: 3000,
+      localPath: `${DOC}/recordings/rec_1700000000000.m4a`,
+      photos: [`${DOC}/photos/rec_1700000000000_0.jpg`, `${DOC}/photos/r1_2.jpg`],
+    };
+    for (const uri of [local.localPath, ...local.photos]) fakeFs.seed(uri, uri);
+    const older = { ...incoming, photosBase64: ['UEhPVE8=', 'UEhPVE8=', 'UEhPVE8='] };
+
+    await importWith([local], v1([older]));
+
+    expect(fakeFs.read(`${DOC}/photos/r1_2.jpg`)).toBe(`${DOC}/photos/r1_2.jpg`);
+    expect(fakeFs.list(DOC)).toEqual([local.localPath, ...local.photos].sort());
+  });
+});

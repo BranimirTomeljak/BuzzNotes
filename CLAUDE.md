@@ -195,6 +195,7 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 - Import uses `File.pickFileAsync()` from expo-file-system to select a file
 - Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths
 - Merge strategy: imported items with same ID update existing (by updatedAt); new items are added
+- Import writes no media for a record whose local copy is newer (`importData(existing)` skips it when `local.updatedAt > incoming.updatedAt`, the exact complement of the merge's `>=`), so an older backup never overwrites newer photos or audio
 
 ### Files Kept for Future Firebase Integration
 - `firebaseConfig.ts` - Firebase config placeholder (initializes Firebase at import time — do NOT import at top level)

@@ -19,6 +19,7 @@ jest.mock('expo-crypto', () => {
 });
 
 const DOC = 'file:///data/user/0/app/files';
+const PICKED = 'file:///data/user/0/app/cache/DocumentPicker/backup.buzznotes.json';
 const KEYS = {
   locations: '@buzznotes/locations',
   beehives: '@buzznotes/beehives',
@@ -71,6 +72,16 @@ const recB = recording('rec-b', `${DOC}/recordings/rec_1700000009000.m4a`, [
   `${DOC}/photos/rec_1700000009000_0.jpg`,
   `${DOC}/photos/rec-b_1.jpg`,
 ]);
+
+function backup(recordings: object[]): string {
+  return JSON.stringify({
+    version: 1,
+    exportedAt: 1,
+    locations: [loc],
+    beehives: [hive],
+    recordings,
+  });
+}
 
 let data: ReturnType<typeof useData>;
 let renderer: { unmount: () => void } | undefined;
@@ -324,6 +335,43 @@ describe('DataProvider', () => {
 
     expect(data.deleteRecording).toBe(capturedDelete);
     expect(fakeFs.list()).toEqual([]);
+  });
+
+  it('an import keeps the media of a newer local record', async () => {
+    const local = { ...recA, updatedAt: 3000 };
+    const localFiles = [local.localPath, ...local.photos!];
+    for (const uri of localFiles) fakeFs.seed(uri, uri);
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [local] });
+    await renderProvider();
+    const older = { ...recA, audioBase64: 'QVVESU8=', photosBase64: ['UEhPVE8=', 'UEhPVE8='] };
+    fakeFs.seed(PICKED, backup([older]));
+    File.pickFileAsync.mockResolvedValueOnce(new File(PICKED));
+
+    await act(async () => {
+      await data.importAllData();
+    });
+
+    expect(data.recordings).toEqual([local]);
+    expect(fakeFs.list(DOC)).toEqual([...localFiles].sort());
+    for (const uri of localFiles) expect(fakeFs.read(uri)).toBe(uri);
+  });
+
+  it('after an import, deleting the record leaves no file', async () => {
+    await seedStorage({ locations: [loc], beehives: [hive], recordings: [] });
+    await renderProvider();
+    const incoming = { ...recB, audioBase64: 'QVVESU8=', photosBase64: ['UEhPVE8=', 'UEhPVE8='] };
+    fakeFs.seed(PICKED, backup([incoming]));
+    File.pickFileAsync.mockResolvedValueOnce(new File(PICKED));
+
+    await act(async () => {
+      await data.importAllData();
+    });
+    expect(fakeFs.list(DOC)).toHaveLength(3);
+    await act(async () => {
+      await data.deleteRecording('rec-b');
+    });
+
+    expect(fakeFs.list(DOC)).toEqual([]);
   });
 
   it("a moved beehive's recordings are saved aligned", async () => {
