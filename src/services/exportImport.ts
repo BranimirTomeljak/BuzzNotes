@@ -2,7 +2,10 @@ import { Paths, File, Directory } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { Location, Beehive, Recording } from '../models/types';
-import { ensurePhotosDir } from './photoStorage';
+import { ensurePhotosDir, isAppMediaPath } from './photoStorage';
+
+// Recording ids become media file names, so only plain names may be imported.
+const SAFE_ID = /^[\w-]+$/;
 
 interface ExportRecording extends Recording {
   audioBase64?: string;
@@ -33,7 +36,7 @@ export async function exportData(
       let photosBase64: string[] | undefined;
 
       if (Platform.OS !== 'web') {
-        if (rec.localPath) {
+        if (rec.localPath && isAppMediaPath(rec.localPath)) {
           try {
             const file = new File(rec.localPath);
             if (file.exists) {
@@ -47,6 +50,7 @@ export async function exportData(
         if (rec.photos?.length) {
           photosBase64 = [];
           for (const photoPath of rec.photos) {
+            if (!isAppMediaPath(photoPath)) continue;
             try {
               const file = new File(photoPath);
               if (file.exists) {
@@ -110,6 +114,9 @@ export async function importData(existing: Recording[] = []): Promise<{
 
   if (data.version !== 1) {
     throw new Error('Unsupported export format version');
+  }
+  if (data.recordings.some((rec) => typeof rec.id !== 'string' || !SAFE_ID.test(rec.id))) {
+    throw new Error('Unsupported recording id');
   }
 
   // Restore audio files and photos

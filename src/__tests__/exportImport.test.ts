@@ -107,6 +107,23 @@ describe('exportData + importData', () => {
     expect(fakeFs.list(`${DOC}/photos`)).toEqual([`${DOC}/photos/r1_0.jpg`]);
   });
 
+  it('export embeds only files inside the app media folders', async () => {
+    const database = 'file:///data/user/0/app/databases/RKStorage';
+    fakeFs.seed(database, 'SECRET');
+    fakeFs.seed(rec.photos![0], 'PHOTO-0');
+    const crafted = {
+      ...rec,
+      localPath: database,
+      photos: [database, rec.photos![0], `${DOC}/photos/../../databases/RKStorage`],
+    };
+
+    await exportData([loc], [hive], [crafted]);
+
+    const exported = JSON.parse(fakeFs.read(EXPORT_URI)!).recordings[0];
+    expect(exported.audioBase64).toBeUndefined();
+    expect(exported.photosBase64).toEqual([btoa('PHOTO-0')]);
+  });
+
   it('drops a photo whose read fails at export time', async () => {
     fakeFs.seed(rec.localPath, 'AUDIO-1');
     fakeFs.seed(rec.photos![0], 'PHOTO-0');
@@ -205,6 +222,24 @@ describe('importData', () => {
 
     await expect(importFile(v2)).rejects.toThrow('Unsupported export format version');
     expect(fakeFs.list()).toEqual([PICKED_URI]);
+  });
+
+  it('rejects an import whose recording ids are not plain names and writes nothing', async () => {
+    for (const id of ['../../databases/RKStorage', 'a/b', '..', 'r1.m4a', '', 'x y', undefined]) {
+      fakeFs.reset();
+      const good = { ...rec, id: 'r2', audioBase64: 'QVVESU8=' };
+      const bad = { ...rec, id, audioBase64: 'QVVESU8=', photosBase64: ['UEhPVE8='] };
+      const json = JSON.stringify({
+        version: 1,
+        exportedAt: 1,
+        locations: [],
+        beehives: [],
+        recordings: [good, bad],
+      });
+
+      await expect(importFile(json)).rejects.toThrow('Unsupported recording id');
+      expect(fakeFs.list()).toEqual([PICKED_URI]);
+    }
   });
 });
 
