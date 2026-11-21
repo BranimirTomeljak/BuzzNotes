@@ -332,6 +332,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const exportAllData = useCallback(async () => {
+    if (state.loading) {
+      showLoadError();
+      return;
+    }
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
       await exportData(state.locations, state.beehives, state.recordings);
@@ -349,7 +353,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
-  }, [state.locations, state.beehives, state.recordings, t]);
+  }, [state.locations, state.beehives, state.recordings, state.loading, t]);
 
   const importAllData = useCallback(async () => {
     if (state.loading) {

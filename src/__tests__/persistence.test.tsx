@@ -2,7 +2,7 @@ import React, { act, useLayoutEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import { DataProvider, useData } from '../contexts/DataContext';
-import { importData } from '../services/exportImport';
+import { exportData, importData } from '../services/exportImport';
 import { Beehive, Location, Priority, Recording } from '../models/types';
 
 const { create } = require('react-test-renderer') as {
@@ -218,6 +218,17 @@ describe('DataProvider persistence', () => {
     expect(data.syncing).toBe(false);
     expect(toasts()).toEqual([loadErrorToast, loadErrorToast]);
     await expectNothingWritten();
+  });
+
+  it('export while stuck is blocked, so no empty backup is made', async () => {
+    failRead('@buzznotes/beehives');
+    await renderProvider();
+
+    await run(() => data.exportAllData());
+
+    expect(exportData).not.toHaveBeenCalled();
+    expect(data.syncing).toBe(false);
+    expect(toasts()).toEqual([loadErrorToast, loadErrorToast]);
   });
 
   it('a failed refresh keeps state, writes nothing and shows one toast', async () => {
