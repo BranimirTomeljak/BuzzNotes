@@ -13,13 +13,13 @@ import { colors } from '../src/theme';
 
 const ONBOARDING_KEY = '@buzznotes/onboardingDone';
 
-// The default error toast shows one line, which cuts off long messages such as common.loadError.
+// The default error toast shows one line; 0 removes the limit so long messages wrap in full.
 const toastConfig: ToastConfig = {
   error: (props) => (
     <ErrorToast
       {...props}
       style={{ borderLeftColor: '#FE6301', height: 'auto', minHeight: 60 }}
-      text1NumberOfLines={3}
+      text1NumberOfLines={0}
     />
   ),
 };
