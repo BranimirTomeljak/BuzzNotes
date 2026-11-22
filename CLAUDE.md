@@ -71,7 +71,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
 - **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there.
-- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, plural forms, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
+- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, plural forms, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
@@ -267,6 +267,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap without a line limit through `toastConfig` in `app/_layout.tsx` (the box grows, so large system font sizes still show the whole message), so keep success and info texts short.
 - **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
 - **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.
+- **Blocked Android permissions**: `app.json` `android.blockedPermissions` removes `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (expo-audio declares them for background services the app never starts) and the template's `SYSTEM_ALERT_WINDOW`. Never block storage (the image picker needs `WRITE_EXTERNAL_STORAGE` below API 29, and minSdk is 24), `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`, `CAMERA`, `VIBRATE` or `INTERNET`. Library permissions are merged by Gradle at build time, so `npx expo config --type introspect` shows a blocked one only as an entry with `tools:node="remove"`; `releaseConfig.test.ts` checks the list.
 - **Jest: expo-file-system**: jest-expo replaces it with a stub in which `File`, `Directory` and `Paths` are undefined. Every test file that touches files declares `jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'))`.
 - **Jest: expo-crypto**: the auto-mock's `randomUUID` returns `undefined`; mock it with a counter.
 - **Jest: Platform**: `Platform.OS` is `'ios'`; for web paths use `jest.replaceProperty(Platform, 'OS', 'web')`. To exercise the real web stub, also mock `expo-file-system` with `jest.requireActual('expo-file-system')` and `expo-file-system/src/ExpoFileSystem` with `jest.requireActual('expo-file-system/src/ExpoFileSystem.web')`.
