@@ -173,7 +173,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
 
 - **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
-- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deleteRecordingFiles`, `isAppMediaPath`, `ensurePhotosDir`. `isAppMediaPath` accepts only a `[\w-]+.(m4a|jpg)` name directly inside `documents/recordings/` or `documents/photos/`, and `deletePhoto` deletes nothing else. Media file names in use (all must keep working):
+- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deleteRecordingFiles`, `isAppMediaPath`, `ensurePhotosDir`. `isAppMediaPath` accepts only a name matching `^[\w-]+\.(m4a|jpg)$` directly inside `documents/recordings/` or `documents/photos/`, and `deletePhoto` deletes nothing else. Media file names in use (all must keep working):
   - record flow: `recordings/rec_<ts>.m4a` and `photos/rec_<ts>_<ts2>_<i>.jpg` (the record keeps the temporary `rec_<ts>` id in its file names but gets a UUID)
   - detail screen: `photos/<id>_<ts>_<i>.jpg`
   - import: `recordings/<id>.m4a` and `photos/<id>_<i>.jpg`
