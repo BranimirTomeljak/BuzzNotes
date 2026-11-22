@@ -32,11 +32,13 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 
 `eas.json` has two profiles:
 - **`preview`** — builds an APK (directly installable on Android)
-- **`production`** — builds AAB (for Play Store upload)
+- **`production`** — builds AAB (for Play Store upload) and increments the remote `versionCode`
 
 Login first: `npx eas-cli login`
 
 Build APK: `npx eas-cli build --platform android --profile preview`
+
+Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. Google Play accepts an app's first upload only through the Play Console, so upload the first AAB by hand.
 
 This runs in the cloud on EAS servers (free tier: 30 builds/month). It will:
 1. Upload the project
@@ -82,9 +84,9 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 
 ### Versioning
 
-- `app.json` `version` — semantic version string (e.g. `"1.0.0"`)
-- `app.json` `android.versionCode` — integer, increment on each release
-- `package.json` `version` — keep in sync with `app.json`
+- `app.json` `version` — semantic version string (e.g. `"1.0.0"`), bumped by hand for each release
+- `android.versionCode` — managed remotely by EAS (`cli.appVersionSource: "remote"`), and every `production` build increments it (`autoIncrement`). The `versionCode: 1` in `app.json` only seeds the remote value when EAS has none yet. If Play already has a higher versionCode, set the remote value first with `npx eas-cli build:version:set`
+- `package.json` `version` — keep in sync with `app.json`, also by hand
 
 ## Project Structure
 - `app/` - Expo Router screens (tabs, location/[id], beehive/[id], recording/[id], record, settings)
