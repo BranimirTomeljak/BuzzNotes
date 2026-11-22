@@ -86,10 +86,10 @@ export default {
   // Onboarding
   onboarding: {
     welcome: 'Dobrodošli u BuzzNotes',
-    subtitle: 'Vaš pčelarski dnevnik glasovnih bilješki',
-    feature1: 'Organizirajte pčelinjake po lokaciji',
-    feature2: 'Pratite svaku košnicu',
-    feature3: 'Snimajte glasovne bilješke s prioritetom',
+    subtitle: 'Tvoj pčelarski dnevnik glasovnih bilješki',
+    feature1: 'Organiziraj pčelinjake po lokaciji',
+    feature2: 'Prati svaku košnicu',
+    feature3: 'Snimaj glasovne bilješke s prioritetom',
     getStarted: 'Započni',
   },
 
