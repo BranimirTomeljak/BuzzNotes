@@ -108,6 +108,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
 - Croatian is the default language
 - Croatian copy uses informal "ti"; the welcome keeps the gender-neutral "Dobrodošli"
+- `PRIVACY.md` (Android app only; placeholders `<DEVELOPER_NAME>`, `<CONTACT_EMAIL>`, `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
 - Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)
 - Large touch targets and font sizes for accessibility
 - Priority system: HIGH (red #EF5350), MEDIUM (yellow #F9A825), LOW (blue #5C9CE6)
