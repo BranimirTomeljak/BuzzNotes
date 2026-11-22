@@ -103,6 +103,9 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/__tests__/` - Jest unit tests
 - `src/testUtils/` - Jest-only helpers (`fakeFileSystem`); never imported by app code
 - `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
+- `README.md` - Developer overview: platforms, stack, setup, builds, architecture, backup, limitations; keep its quality-check list in sync with CI
+- `LICENSE` - Proprietary license; `<OWNER NAME>` is a placeholder the owner fills in
+- `PRIVACY.md` - Privacy policy for the Android app; placeholders until it is published
 
 ## Conventions
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
