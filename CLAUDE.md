@@ -14,7 +14,7 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - **Haptics**: expo-haptics (no-op on web)
 - **Icons**: @expo/vector-icons (Ionicons + MaterialCommunityIcons) — no emojis in UI
 - **State**: React Context + useReducer
-- **i18n**: i18next (Croatian default, English)
+- **i18n**: i18next (Croatian default, English), with the `intl-pluralrules` polyfill for Hermes
 - **Export/Import**: expo-sharing + expo-file-system
 
 ## Commands
@@ -71,7 +71,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
 - **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there.
-- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
+- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, plural forms, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
@@ -248,6 +248,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 
 ## Known Pitfalls
 - **uuid package**: `crypto.getRandomValues()` not supported on React Native/Hermes. Use `expo-crypto` `randomUUID()` instead.
+- **Hermes has no Intl.PluralRules**: RN 0.81's Hermes on Android lacks it, and i18next then knows only one/other, so Croatian would show "2 snimki" instead of "2 snimke". `src/i18n/index.ts` imports the `intl-pluralrules` polyfill first. Plural keys use the suffixes `_one`, `_few` and `_other`; i18next 25 ignores `_plural`.
 - **Firebase lazy loading**: `firebaseConfig.ts` initializes Firebase at import time. Any file that imports it will trigger initialization. Use dynamic `import()` for firebase in runtime code, or keep static imports only in files that aren't auto-loaded.
 - **expo-av deprecated in SDK 54**: Use `expo-audio` package instead. Hooks: `useAudioPlayer`, `useAudioPlayerStatus`, `useAudioRecorder`.
 - **Slider drag**: Must use `pageX` (absolute coordinates) with `measureInWindow`, not `locationX` (relative to element). Store callbacks in refs to avoid stale PanResponder closures.
@@ -271,6 +272,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Jest: react-test-renderer**: 19.1.0 comes in through jest-expo but has no types, so `import ... from 'react-test-renderer'` fails CI's strict `tsc` with TS7016. Use `const { create } = require('react-test-renderer') as { create: (el: React.ReactElement) => { unmount: () => void } };` and take `act` from `'react'`.
 - **Jest: provider tests**: also mock `react-native-toast-message` (`{ __esModule: true, default: { show: jest.fn() } }`) and `react-i18next` (`t` returns the key). In `beforeEach`, call `fakeFs.reset()` and `AsyncStorage.clear()`, then seed AsyncStorage. Render inside `await act(async () => ...)`, let effects settle with a zero timeout inside `act`, and unmount in `afterEach`.
 - **Jest: i18n**: every test that imports `DataContext` mocks `../i18n` with `{ __esModule: true, default: { t: (key: string) => key } }`. The real module calls `i18n.use(initReactI18next)` at import time, which throws under the `react-i18next` mock and logs a locize notice otherwise.
+- **Jest: Intl.PluralRules**: Node has a native one, so a plural test passes even where the phone fails. `i18n.test.ts` deletes it before requiring `../i18n`, and restores it afterwards.
 - **Jest: mocks and lint**: put `jest.mock` calls after the imports (babel hoists them, and this avoids the `import/first` warning), and leave no unused imports, or lint shows a third warning.
 
 ## UX Polish
