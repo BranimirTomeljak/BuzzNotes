@@ -68,7 +68,7 @@ npx eas-cli build --platform android --profile production  # AAB for Google Play
 npx eas-cli submit --platform android --profile production # upload to Play's internal track as a draft
 ```
 
-EAS keeps the Android version code (`appVersionSource: remote`) and increments it on every production build; bump `version` in `app.json` and `package.json` by hand. The Play service-account key is stored on EAS, and Google Play takes an app's first upload only through the Play Console. Every push to `master` also starts a preview build through EAS Workflows (`.eas/workflows/build-android-preview.yml`); `[skip eas]` in the commit message skips it.
+EAS keeps the Android version code (`appVersionSource: remote`) and increments it on every production build; bump `version` in `app.json` and `package.json` by hand. The Play service-account key is stored on EAS. Per the EAS docs, once the app exists in Play Console the first submit creates its first internal release; if Play rejects it, upload that AAB by hand. Every push to `master` also starts a preview build through EAS Workflows (`.eas/workflows/build-android-preview.yml`); `[skip eas]` in the commit message skips it.
 
 ## Data and backup
 

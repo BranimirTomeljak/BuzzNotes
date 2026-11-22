@@ -40,14 +40,14 @@ Login first: `npx eas-cli login`
 
 Build APK: `npx eas-cli build --platform android --profile preview`
 
-Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. Google Play accepts an app's first upload only through the Play Console, so upload the first AAB by hand.
-
 This runs in the cloud on EAS servers (free tier: 30 builds/month). It will:
 1. Upload the project
 2. Build the APK (~5-10 min)
 3. Return a download link for the `.apk`
 
 Expo account required — sign up free at https://expo.dev/signup
+
+Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. Per the EAS docs, once the app exists in Play Console the first submit creates its first internal release; if Play rejects it because the app has never had an upload, upload that AAB by hand in Play Console.
 
 ### GitHub Auto-Build
 
@@ -275,7 +275,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap without a line limit through `toastConfig` in `app/_layout.tsx` (the box grows, so large system font sizes still show the whole message), so keep success and info texts short.
 - **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
 - **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.
-- **Blocked Android permissions**: `app.json` `android.blockedPermissions` removes `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (expo-audio declares them for background services the app never starts) and the template's `SYSTEM_ALERT_WINDOW`. Never block storage (the image picker needs `WRITE_EXTERNAL_STORAGE` below API 29, and minSdk is 24), `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`, `CAMERA`, `VIBRATE` or `INTERNET`. Library permissions are merged by Gradle at build time, so `npx expo config --type introspect` shows a blocked one only as an entry with `tools:node="remove"`; `releaseConfig.test.ts` checks the list.
+- **Blocked Android permissions**: `app.json` `android.blockedPermissions` removes `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (expo-audio declares them for background services the app never starts) and the template's `SYSTEM_ALERT_WINDOW`. Never block storage (the image picker needs `WRITE_EXTERNAL_STORAGE` below API 29, and minSdk is 24), `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`, `CAMERA`, `VIBRATE` or `INTERNET`. Library permissions are merged by Gradle at build time, so `npx expo config --type introspect` shows a blocked one only as an entry with `tools:node="remove"`; `releaseConfig.test.ts` checks the list. Lock-screen controls (`setActiveForLockScreen`) and background recording (`setAudioModeAsync({ allowsBackgroundRecording: true })`) start expo-audio's foreground services, so unblock the permissions before using either; background recording also needs `FOREGROUND_SERVICE_MICROPHONE`, which the expo-audio plugin adds with `enableBackgroundRecording`. Otherwise the services cannot enter the foreground and the app crashes on Android 9 and later. The expo-image-picker plugin options `microphonePermission: false` and `cameraPermission: false` block `RECORD_AUDIO` and `CAMERA`; never set them.
 - **Jest: expo-file-system**: jest-expo replaces it with a stub in which `File`, `Directory` and `Paths` are undefined. Every test file that touches files declares `jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'))`.
 - **Jest: expo-crypto**: the auto-mock's `randomUUID` returns `undefined`; mock it with a counter.
 - **Jest: Platform**: `Platform.OS` is `'ios'`; for web paths use `jest.replaceProperty(Platform, 'OS', 'web')`. To exercise the real web stub, also mock `expo-file-system` with `jest.requireActual('expo-file-system')` and `expo-file-system/src/ExpoFileSystem` with `jest.requireActual('expo-file-system/src/ExpoFileSystem.web')`.
