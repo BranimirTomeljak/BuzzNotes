@@ -35,12 +35,12 @@ Expo SDK 54 · React Native 0.81 (New Architecture, Hermes) · React 19.1 · Typ
 - Data model: Location → Beehive → Recording. A recording stores its audio file, duration, priority, solved status, notes and photos.
 - Local-first: data stays on the device (AsyncStorage plus the app's documents folder). Every record carries a user ID, so it can be attached to an account once cloud sync is added.
 - Storage keys: `@buzznotes/locations`, `@buzznotes/beehives` and `@buzznotes/recordings` hold JSON arrays and are written together in one AsyncStorage `multiSet`. `@buzznotes/userId` (a random installation id), `@buzznotes/language` and `@buzznotes/onboardingDone` hold settings.
-- Media files: audio in `recordings/` (`.m4a`) and photos in `photos/` (`.jpg`), inside the app's documents folder. Records store each file's full path. Audio is named after a recording id or a temporary `rec_<timestamp>` id, and photo names add a timestamp, an index or both. Only plain names directly inside those two folders count as app media, and deletes touch nothing else.
+- Media files: audio in `recordings/` (`.m4a`) and photos in `photos/` (`.jpg`), inside the app's documents folder. Records store each file's full path. Audio is named after a recording id or a temporary `rec_<timestamp>` id, and photo names add an index, or a timestamp and an index. Only plain names directly inside those two folders count as app media, and deletes touch nothing else.
 - Export file: a version-1 `.buzznotes.json` with `version`, `exportedAt`, `locations`, `beehives` and `recordings`, where each recording can carry its audio as `audioBase64` and its photos as `photosBase64`. Import rejects other versions and recording ids that are not plain names. It merges by id (the newer `updatedAt` wins; on a tie, the imported copy), and writes no media for records whose local copy is newer.
 
 ## Getting started
 
-Requires Node 20, the version CI uses.
+Requires Node 20.19.4 or newer, the minimum for React Native 0.81 and Metro; CI uses the latest Node 20.
 
 ```bash
 npm ci

@@ -75,7 +75,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
 - **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there.
-- **Coverage**: formatting utils, sorting utils, data reducer, export/import, photo storage, plural forms, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
+- **Coverage**: formatting utils, sorting utils, theme, responsive hook, data reducer, export/import, photo storage, plural forms, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
