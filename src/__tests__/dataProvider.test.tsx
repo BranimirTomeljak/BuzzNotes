@@ -88,6 +88,13 @@ const recD: Recording = {
   beehiveId: 'bh3',
   locationId: 'loc2',
 };
+// Its beehive is gone, as older builds left after a move; only its own locationId ties it to loc1.
+const orphan: Recording = {
+  ...recording('rec-o', `${DOC}/recordings/rec_1700000013000.m4a`, [
+    `${DOC}/photos/rec_1700000013000_0.jpg`,
+  ]),
+  beehiveId: 'bh-gone',
+};
 const filesOf = (r: Recording) => [r.localPath, ...(r.photos ?? [])];
 
 function backup(recordings: object[]): string {
@@ -122,7 +129,7 @@ async function renderProvider() {
 }
 
 async function renderCascade() {
-  const all = [recA, recB, recC, recD];
+  const all = [recA, recB, recC, recD, orphan];
   for (const uri of all.flatMap(filesOf)) fakeFs.seed(uri, uri);
   await seedStorage({ locations: [loc, loc2], beehives: [hive, hive2, hive3], recordings: all });
   await renderProvider();
@@ -441,7 +448,7 @@ describe('DataProvider', () => {
     await act(async () => {
       await data.deleteBeehive('bh2');
     });
-    expect(data.recordings.map((r) => r.id)).toEqual(['rec-a', 'rec-b', 'rec-d']);
+    expect(data.recordings.map((r) => r.id)).toEqual(['rec-a', 'rec-b', 'rec-d', 'rec-o']);
     expect(fakeFs.list(DOC)).toEqual(data.recordings.flatMap(filesOf).sort());
 
     await act(async () => {
@@ -503,7 +510,7 @@ describe('DataProvider', () => {
       await data.deleteBeehive('bh1');
     });
 
-    expect(fakeFs.list(DOC)).toEqual([failing, ...[recC, recD].flatMap(filesOf)].sort());
+    expect(fakeFs.list(DOC)).toEqual([failing, ...[recC, recD, orphan].flatMap(filesOf)].sort());
   });
 
   it("a moved beehive's recordings are saved aligned", async () => {
