@@ -42,4 +42,11 @@ describe('EAS versioning and submit', () => {
   it('keeps the service account key out of the repo', () => {
     expect(easJson.submit.production.android).not.toHaveProperty('serviceAccountKeyPath');
   });
+
+  it.each(['preview', 'production'] as const)(
+    'builds %s on the default image for the SDK',
+    (profile) => {
+      expect(easJson.build[profile].android).not.toHaveProperty('image');
+    },
+  );
 });

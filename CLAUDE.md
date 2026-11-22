@@ -34,6 +34,8 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 - **`preview`** — builds an APK (directly installable on Android)
 - **`production`** — builds AAB (for Play Store upload) and increments the remote `versionCode`
 
+Both profiles build on EAS's default image for the Expo SDK. Do not set `"image": "latest"`, which moves to a new toolchain without notice.
+
 Login first: `npx eas-cli login`
 
 Build APK: `npx eas-cli build --platform android --profile preview`
