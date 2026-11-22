@@ -11,6 +11,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   Animated,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -360,17 +361,21 @@ export default function RecordingDetail() {
             </Text>
           </View>
 
-          {/* Add photo buttons */}
-          <View style={styles.photoButtons}>
-            <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
-              <Ionicons name="camera-outline" size={20} color={colors.primary} />
-              <Text style={styles.photoButtonText}>{t('recordings.takePhoto')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
-              <Ionicons name="image-outline" size={20} color={colors.primary} />
-              <Text style={styles.photoButtonText}>{t('recordings.chooseFromGallery')}</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Add photo buttons; web picker URIs are blob: URLs that die on reload */}
+          {Platform.OS === 'web' ? (
+            <Text style={styles.webNote}>{t('common.webUnavailable')}</Text>
+          ) : (
+            <View style={styles.photoButtons}>
+              <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+                <Ionicons name="camera-outline" size={20} color={colors.primary} />
+                <Text style={styles.photoButtonText}>{t('recordings.takePhoto')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
+                <Ionicons name="image-outline" size={20} color={colors.primary} />
+                <Text style={styles.photoButtonText}>{t('recordings.chooseFromGallery')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Photo grid */}
           {hasPhotos && (
@@ -564,6 +569,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
+  },
+  webNote: {
+    ...typography.bodySmall,
   },
   photoGrid: {
     flexDirection: 'row',

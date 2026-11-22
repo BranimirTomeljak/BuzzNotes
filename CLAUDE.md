@@ -1,7 +1,7 @@
 # BuzzNotes - Beekeeper Voice Notes App
 
 ## Project Overview
-React Native (Expo) app for beekeepers to manage voice recordings organized by location and beehive. Targets Android + Web.
+React Native (Expo) app for beekeepers to manage voice recordings organized by location and beehive. Targets Android; the web build is a limited UI preview (no recording, photos or export/import).
 
 **Important**: Keep this CLAUDE.md updated after every noteworthy change (new features, architectural decisions, convention changes, pitfalls discovered). This file is the source of truth for the project.
 
@@ -261,6 +261,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **One toast at a time**: react-native-toast-message replaces the visible toast. On Fabric a tap's dispatch commits and runs effects before the handler's `await` resumes, so a toast shown from an effect is replaced by the handler's own toast. Defer such toasts with `setTimeout(..., 0)`, as the failed-load warning in the persist effect does.
 - **File.copy never overwrites**: on Android `File.copy` throws if the target exists, while `File.write` creates or truncates. New media names must be unique, which is why `savePhoto` adds `Date.now()`.
 - **Media deletes come first**: deleting a recording, beehive or location removes the files of exactly the recordings the reducer drops (`deleteBeehive` and `deleteLocation` use the same predicates as `DELETE_BEEHIVE` and `DELETE_LOCATION`), before the records go. If that save then fails (for example `STORAGE_FULL`), the record comes back after a restart without its files; this is accepted. Orphaned files that older versions left behind are never swept.
+- **Web media**: on web the recorder and image picker return `blob:` URLs that stop working after a reload, and expo-file-system is a stub, so export and import cannot work. The web preview therefore hides recording and the photo buttons and disables Export and Import, showing `common.webUnavailable` instead. Keep new media features behind the same `Platform.OS === 'web'` gate.
 - **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap without a line limit through `toastConfig` in `app/_layout.tsx` (the box grows, so large system font sizes still show the whole message), so keep success and info texts short.
 - **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
 - **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.

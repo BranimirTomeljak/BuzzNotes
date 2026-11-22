@@ -118,5 +118,6 @@ export default {
     saveError: 'Changes could not be saved',
     storageFull:
       'Too much data; changes are not saved. Export a backup, then delete old recordings',
+    webUnavailable: 'Recording, photos and export/import are only available in the Android app',
   },
 };

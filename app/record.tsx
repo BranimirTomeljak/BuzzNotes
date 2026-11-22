@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -201,6 +202,22 @@ export default function RecordScreen() {
       setStep('record');
     }
   }, [selectedBeehiveId, selectedLocationId]);
+
+  // Web recorder URIs are blob: URLs that die on reload, so the web preview cannot record.
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+            <Ionicons name="close" size={28} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('recordings.add')}</Text>
+          <View style={styles.closeButton} />
+        </View>
+        <Text style={styles.webNote}>{t('common.webUnavailable')}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -411,6 +428,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: colors.white,
+  },
+  webNote: {
+    ...typography.bodySmall,
+    padding: spacing.xl,
+    textAlign: 'center',
   },
   content: {
     flexGrow: 1,

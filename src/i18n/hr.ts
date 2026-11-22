@@ -120,5 +120,6 @@ export default {
     saveError: 'Promjene nije moguće spremiti',
     storageFull:
       'Previše podataka; promjene se ne spremaju. Izvezi sigurnosnu kopiju pa obriši stare snimke',
+    webUnavailable: 'Snimanje, fotografije te izvoz i uvoz dostupni su samo u Android aplikaciji',
   },
 };
