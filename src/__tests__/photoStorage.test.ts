@@ -94,6 +94,9 @@ describe('photoStorage', () => {
       `${PHOTOS}../recordings/r1.m4a`,
       `${PHOTOS}%2e%2e/recordings/r1.m4a`,
       `${PHOTOS}..%2Frecordings%2Fr1.m4a`,
+      `${PHOTOS}%2e%2e%2Frecordings%2Fr1.m4a`,
+      `${PHOTOS}%2e%2e%2Fr2.m4a`,
+      `${PHOTOS}%2e%2e%2F%2e%2e%2Fcache%2FImagePicker%2FIMG_0001.jpg`,
       `${PHOTOS}r1_0.jpg?x`,
       `${PHOTOS}r1_0.jpg#x`,
       `${PHOTOS}r1_0.jpeg`,
@@ -102,18 +105,31 @@ describe('photoStorage', () => {
     ];
 
     expect(refused.filter((uri) => isAppMediaPath(uri))).toEqual([]);
+    expect([undefined, null, 5].map((v) => isAppMediaPath(v as unknown as string))).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 
   it('deletePhoto refuses a crafted path that resolves to another app file', () => {
     fakeFs.seed(DATABASE, 'DB');
     fakeFs.seed(`${RECORDINGS}r1.m4a`, 'AUDIO');
 
+    fakeFs.seed(`${DOC}/r2.m4a`, 'R2');
+    fakeFs.seed(PICKED, 'CACHED');
+
     deletePhoto(`${PHOTOS}..%2F..%2Fdatabases%2FRKStorage`);
     deletePhoto(`${PHOTOS}..%2Frecordings%2Fr1.m4a`);
     deletePhoto(DATABASE);
+    deletePhoto(`${PHOTOS}%2e%2e%2Frecordings%2Fr1.m4a`);
+    deletePhoto(`${PHOTOS}%2e%2e%2Fr2.m4a`);
+    deletePhoto(`${PHOTOS}%2e%2e%2F%2e%2e%2Fcache%2FImagePicker%2FIMG_0001.jpg`);
 
     expect(fakeFs.read(DATABASE)).toBe('DB');
     expect(fakeFs.read(`${RECORDINGS}r1.m4a`)).toBe('AUDIO');
+    expect(fakeFs.read(`${DOC}/r2.m4a`)).toBe('R2');
+    expect(fakeFs.read(PICKED)).toBe('CACHED');
   });
 
   it('names from step 7 and the older schemes pass the guard', () => {

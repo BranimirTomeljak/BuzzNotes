@@ -124,6 +124,17 @@ describe('exportData + importData', () => {
     expect(exported.photosBase64).toEqual([btoa('PHOTO-0')]);
   });
 
+  it('export skips paths that are not strings without failing', async () => {
+    fakeFs.seed(rec.photos![0], 'PHOTO-0');
+    const malformed = { ...rec, localPath: 5, photos: [null, rec.photos![0]] };
+
+    await exportData([loc], [hive], [malformed as unknown as Recording]);
+
+    const exported = JSON.parse(fakeFs.read(EXPORT_URI)!).recordings[0];
+    expect(exported.audioBase64).toBeUndefined();
+    expect(exported.photosBase64).toEqual([btoa('PHOTO-0')]);
+  });
+
   it('drops a photo whose read fails at export time', async () => {
     fakeFs.seed(rec.localPath, 'AUDIO-1');
     fakeFs.seed(rec.photos![0], 'PHOTO-0');
