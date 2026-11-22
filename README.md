@@ -92,4 +92,4 @@ EAS keeps the Android version code (`appVersionSource: remote`) and increments i
 
 ## License
 
-Proprietary; see [LICENSE](LICENSE).
+Proprietary, owned by KeyZero d.o.o.; see [LICENSE](LICENSE).

@@ -2,7 +2,7 @@
 
 Effective date: <EFFECTIVE_DATE>
 
-This policy covers the BuzzNotes app for Android, made by <DEVELOPER_NAME>. For questions about it, write to <CONTACT_EMAIL>.
+This policy covers the BuzzNotes app for Android. The app is owned by KeyZero d.o.o., Croatia, and developed by Branimir Tomeljak. For questions about this policy, write to <CONTACT_EMAIL>.
 
 ## In short
 

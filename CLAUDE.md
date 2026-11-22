@@ -3,6 +3,8 @@
 ## Project Overview
 React Native (Expo) app for beekeepers to manage voice recordings organized by location and beehive. Targets Android; the web build is a limited UI preview (no recording, photos or export/import).
 
+Owned by KeyZero d.o.o. (Croatia); Branimir Tomeljak is its sole developer.
+
 **Important**: Keep this CLAUDE.md updated after every noteworthy change (new features, architectural decisions, convention changes, pitfalls discovered). This file is the source of truth for the project.
 
 ## Tech Stack
@@ -104,7 +106,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/testUtils/` - Jest-only helpers (`fakeFileSystem`); never imported by app code
 - `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
 - `README.md` - Developer overview: platforms, stack, setup, builds, architecture, backup, limitations; keep its quality-check list in sync with CI
-- `LICENSE` - Proprietary license; `<OWNER NAME>` is a placeholder the owner fills in
+- `LICENSE` - Proprietary license; the copyright holder is KeyZero d.o.o.
 - `PRIVACY.md` - Privacy policy for the Android app; placeholders until it is published
 
 ## Conventions
@@ -112,7 +114,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Croatian is the default language
 - Croatian copy uses informal "ti"; the welcome keeps the gender-neutral plural greeting "Dobro došli", two words as the IHJJ pravopis writes greetings ("dobrodošli" is the adjective)
 - A number shown next to a noun uses a plural key (`beehives.recordingCount`, `common.beehiveLabel`, `common.recordingLabel`), never a screen title
-- `PRIVACY.md` (Android app only; placeholders `<DEVELOPER_NAME>`, `<CONTACT_EMAIL>`, `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
+- `PRIVACY.md` (Android app only; placeholders `<CONTACT_EMAIL>` and `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
 - Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)
 - Large touch targets and font sizes for accessibility
 - Priority system: HIGH (red #EF5350), MEDIUM (yellow #F9A825), LOW (blue #5C9CE6)
