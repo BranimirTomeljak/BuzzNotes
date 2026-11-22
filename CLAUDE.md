@@ -110,7 +110,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 ## Conventions
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
 - Croatian is the default language
-- Croatian copy uses informal "ti"; the welcome keeps the gender-neutral "Dobrodošli"
+- Croatian copy uses informal "ti"; the welcome keeps the gender-neutral plural greeting "Dobro došli", two words as the IHJJ pravopis writes greetings ("dobrodošli" is the adjective)
 - A number shown next to a noun uses a plural key (`beehives.recordingCount`, `common.beehiveLabel`, `common.recordingLabel`), never a screen title
 - `PRIVACY.md` (Android app only; placeholders `<DEVELOPER_NAME>`, `<CONTACT_EMAIL>`, `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
 - Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)

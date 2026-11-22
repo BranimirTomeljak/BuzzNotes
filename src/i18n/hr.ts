@@ -85,7 +85,7 @@ export default {
 
   // Onboarding
   onboarding: {
-    welcome: 'Dobrodošli u BuzzNotes',
+    welcome: 'Dobro došli u BuzzNotes',
     subtitle: 'Tvoj pčelarski dnevnik glasovnih bilješki',
     feature1: 'Organiziraj pčelinjake po lokaciji',
     feature2: 'Prati svaku košnicu',
