@@ -119,5 +119,9 @@ export default {
     storageFull:
       'Too much data; changes are not saved. Export a backup, then delete old recordings',
     webUnavailable: 'Recording, photos and export/import are only available in the Android app',
+    beehiveLabel_one: 'beehive',
+    beehiveLabel_other: 'beehives',
+    recordingLabel_one: 'recording',
+    recordingLabel_other: 'recordings',
   },
 };

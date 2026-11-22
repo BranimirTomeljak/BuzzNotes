@@ -122,5 +122,11 @@ export default {
     storageFull:
       'Previše podataka; promjene se ne spremaju. Izvezi sigurnosnu kopiju pa obriši stare snimke',
     webUnavailable: 'Snimanje, fotografije te izvoz i uvoz dostupni su samo u Android aplikaciji',
+    beehiveLabel_one: 'košnica',
+    beehiveLabel_few: 'košnice',
+    beehiveLabel_other: 'košnica',
+    recordingLabel_one: 'snimka',
+    recordingLabel_few: 'snimke',
+    recordingLabel_other: 'snimki',
   },
 };

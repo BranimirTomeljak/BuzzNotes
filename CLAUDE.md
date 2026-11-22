@@ -75,7 +75,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
 - **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there.
-- **Coverage**: formatting utils, sorting utils, theme, responsive hook, data reducer, export/import, photo storage, plural forms, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
+- **Coverage**: formatting utils, sorting utils, theme, responsive hook, data reducer, export/import, photo storage, plural forms, the location card, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
@@ -111,6 +111,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
 - Croatian is the default language
 - Croatian copy uses informal "ti"; the welcome keeps the gender-neutral "Dobrodošli"
+- A number shown next to a noun uses a plural key (`beehives.recordingCount`, `common.beehiveLabel`, `common.recordingLabel`), never a screen title
 - `PRIVACY.md` (Android app only; placeholders `<DEVELOPER_NAME>`, `<CONTACT_EMAIL>`, `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
 - Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)
 - Large touch targets and font sizes for accessibility
@@ -283,6 +284,7 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 - **Jest: provider tests**: also mock `react-native-toast-message` (`{ __esModule: true, default: { show: jest.fn() } }`) and `react-i18next` (`t` returns the key). In `beforeEach`, call `fakeFs.reset()` and `AsyncStorage.clear()`, then seed AsyncStorage. Render inside `await act(async () => ...)`, let effects settle with a zero timeout inside `act`, and unmount in `afterEach`.
 - **Jest: i18n**: every test that imports `DataContext` mocks `../i18n` with `{ __esModule: true, default: { t: (key: string) => key } }`. The real module calls `i18n.use(initReactI18next)` at import time, which throws under the `react-i18next` mock and logs a locize notice otherwise.
 - **Jest: Intl.PluralRules**: Node has a native one, so a plural test passes even where the phone fails. `i18n.test.ts` deletes it before requiring `../i18n`, and restores it afterwards.
+- **Jest: vector icons**: `@expo/vector-icons` icons render glyph `Text` nodes and load fonts asynchronously, which logs `act` warnings, so component tests mock the icon sets to render `null` (see `locationCard.test.tsx`).
 - **Jest: mocks and lint**: put `jest.mock` calls after the imports (babel hoists them, and this avoids the `import/first` warning), and leave no unused imports, or lint shows a third warning.
 
 ## UX Polish

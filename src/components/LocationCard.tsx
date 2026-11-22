@@ -93,7 +93,7 @@ export default function LocationCard({
               />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{beehiveCount}</Text>
               <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>
-                {t('beehives.title')}
+                {t('common.beehiveLabel', { count: beehiveCount })}
               </Text>
             </View>
             <View style={styles.statDivider} />
@@ -101,7 +101,7 @@ export default function LocationCard({
               <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
               <Text style={[styles.statValue, { fontSize: 20 * scale }]}>{recordingCount}</Text>
               <Text style={[styles.statLabel, { fontSize: 13 * scale }]}>
-                {t('recordings.title')}
+                {t('common.recordingLabel', { count: recordingCount })}
               </Text>
             </View>
           </View>

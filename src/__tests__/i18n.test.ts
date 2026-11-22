@@ -40,3 +40,32 @@ describe('beehive recording count without a native Intl.PluralRules', () => {
     expect(recordingCount('en', count)).toBe(text);
   });
 });
+
+describe('location card labels without a native Intl.PluralRules', () => {
+  const labels = (lng: string, count: number) => [
+    i18n.t('common.beehiveLabel', { lng, count }),
+    i18n.t('common.recordingLabel', { lng, count }),
+  ];
+
+  it.each([
+    [0, 'košnica', 'snimki'],
+    [1, 'košnica', 'snimka'],
+    [2, 'košnice', 'snimke'],
+    [4, 'košnice', 'snimke'],
+    [5, 'košnica', 'snimki'],
+    [11, 'košnica', 'snimki'],
+    [12, 'košnica', 'snimki'],
+    [21, 'košnica', 'snimka'],
+    [22, 'košnice', 'snimke'],
+  ])('uses the Croatian forms for %i', (count, beehives, recordings) => {
+    expect(labels('hr', count)).toEqual([beehives, recordings]);
+  });
+
+  it.each([
+    [0, 'beehives', 'recordings'],
+    [1, 'beehive', 'recording'],
+    [2, 'beehives', 'recordings'],
+  ])('uses the English forms for %i', (count, beehives, recordings) => {
+    expect(labels('en', count)).toEqual([beehives, recordings]);
+  });
+});
