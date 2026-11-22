@@ -21,7 +21,7 @@ Locations in BuzzNotes are names you type; the app does not use GPS or your devi
 
 ## Where your data is stored
 
-Your data, recordings and photos are stored in the app's private storage on your device. The app itself shares nothing with third parties.
+Your data, recordings and photos are stored in the app's private storage on your device and, if Android backup is on, in your Google account backup (see Android backup). The app itself shares nothing with third parties.
 
 ## Export and import
 
@@ -35,7 +35,7 @@ If backup is turned on in your device settings, Android may include the app's da
 
 ## Keeping and deleting your data
 
-Your data stays on your device until you delete it. Removing a photo deletes it, and deleting a recording deletes its audio and photos. Deleting a beehive deletes its recordings, and deleting a location deletes its beehives and recordings, each with their audio and photos. One exception: when an import replaces a recording that is already on your device, that recording's earlier audio and photo files can stay in the app's storage until you clear its storage or uninstall it.
+Your data stays on your device until you delete it. Removing a photo deletes it, and deleting a recording deletes its audio and photos. Deleting a beehive deletes its recordings, and deleting a location deletes its beehives and recordings, each with their audio and photos. There are two exceptions. When an import replaces a recording that is already on your device, that recording's earlier audio and photo files can stay in the app's storage. So can the files of a new recording whose save failed. Clearing the app's storage or uninstalling it removes them.
 
 Recording audio and adding photos leave temporary copies in the app's cache, which Android may clear when it needs space. Clearing the app's cache in Android settings removes them at once. Uninstalling the app, or clearing its storage, deletes all of its data. Neither affects files you exported or your Google backup; delete those where they are stored.
 
@@ -45,7 +45,7 @@ Recording audio and adding photos leave temporary copies in the app's cache, whi
 | --- | --- |
 | `RECORD_AUDIO` | To record voice notes |
 | `CAMERA` | To take photos for a recording |
-| `WRITE_EXTERNAL_STORAGE` | Asked for only on Android 9 and older, where the camera needs it to pass a photo to the app |
+| `WRITE_EXTERNAL_STORAGE` | Asked for only on Android 9 and older, where the camera component the app uses requires it before it opens the camera |
 | `READ_EXTERNAL_STORAGE` | Declared by the app template and its libraries, but never asked for; the photo picker needs no permission |
 | `MODIFY_AUDIO_SETTINGS` | Lets the audio library set up recording and playback |
 | `VIBRATE` | For short vibrations when you tap some buttons |

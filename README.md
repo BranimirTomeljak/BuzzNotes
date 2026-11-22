@@ -72,13 +72,13 @@ EAS keeps the Android version code (`appVersionSource: remote`) and increments i
 
 ## Data and backup
 
-- All data stays on the device; there are no accounts, servers, analytics or ads. [PRIVACY.md](PRIVACY.md) is the privacy policy for the Android app.
+- Data stays on the device unless the user exports it or Android backup copies it; there are no accounts, servers, analytics or ads. [PRIVACY.md](PRIVACY.md) is the privacy policy for the Android app.
 - Export is the only complete backup. It puts all data, recordings and photos into one file, shared through Android's share sheet, and Import merges such a file back in.
 - Android Auto Backup can also copy the app's data to the user's Google account when device backup is on. It is capped at 25 MB per app and skips an app with more data, so it is not a reliable backup of recordings.
 
 ## Known limitations
 
-- No accounts or sync: data lives on one device and moves only through Export and Import.
+- No accounts or sync: data lives on one device. Export and Import are the only reliable way to move it; Android backup or a phone-to-phone transfer may also copy it.
 - Export and import hold the whole file in memory, with audio and photos as base64, so very large backups may run out of memory on some phones.
 - No crash reporting beyond Google Play's Android vitals.
 - Screens have no tests. Jest covers the reducer, the data provider and persistence, file storage, export/import, plural forms, release config, the theme, the responsive hook and utilities.
