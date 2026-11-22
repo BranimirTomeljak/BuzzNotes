@@ -232,6 +232,17 @@ describe('DataProvider persistence', () => {
     expect(toasts()).toEqual([loadErrorToast, loadErrorToast]);
   });
 
+  it('after a recovered load, export runs with the loaded data', async () => {
+    failRead('@buzznotes/beehives');
+    await renderProvider();
+    storage.getItem.mockImplementation(realGetItem);
+    await run(() => data.refreshData());
+
+    await run(() => data.exportAllData());
+
+    expect(exportData).toHaveBeenCalledWith([loc], [hive], [rec]);
+  });
+
   it('a failed refresh keeps state, writes nothing and shows one toast', async () => {
     await renderProvider();
     jest.clearAllMocks();
