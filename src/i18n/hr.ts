@@ -119,6 +119,6 @@ export default {
       'Spremljene podatke nije moguće učitati. Ništa nije prepisano; povuci prema dolje za ponovni pokušaj',
     saveError: 'Promjene nije moguće spremiti',
     storageFull:
-      'Pohrana je puna i promjene se ne spremaju. Izvezi sigurnosnu kopiju pa obriši stare snimke',
+      'Previše podataka; promjene se ne spremaju. Izvezi sigurnosnu kopiju pa obriši stare snimke',
   },
 };

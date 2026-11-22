@@ -117,6 +117,6 @@ export default {
     loadError: 'Could not read saved data. Nothing was overwritten; pull down to retry',
     saveError: 'Changes could not be saved',
     storageFull:
-      'Storage is full and changes are not saved. Export a backup, then delete old recordings',
+      'Too much data; changes are not saved. Export a backup, then delete old recordings',
   },
 };
