@@ -103,11 +103,12 @@ export default function RecordScreen() {
     }
 
     try {
+      // The recorder resets currentTime to 0 when it stops, so read the length first.
+      const duration = Math.round(recorder.currentTime);
       await recorder.stop();
       hapticMedium();
       await configurePlaybackMode();
       const uri = recorder.uri;
-      const duration = Math.round(recorder.currentTime);
       setIsRecording(false);
       setRecordingUri(uri);
       setRecordedDuration(duration);
