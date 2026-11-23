@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useLayoutEffect,
 } from 'react';
 import { randomUUID } from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -193,7 +194,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   });
   // Lets stable callbacks such as deleteRecording read the current recordings.
   const recordingsRef = useRef(state.recordings);
-  recordingsRef.current = state.recordings;
+  useLayoutEffect(() => {
+    recordingsRef.current = state.recordings;
+  }, [state.recordings]);
 
   // Load local data on mount
   useEffect(() => {

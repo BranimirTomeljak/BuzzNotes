@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -53,7 +53,7 @@ function ZoomableImage({
   pageIndex: number;
   activeIndex: number;
 }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [scaleAnim] = useState(() => new Animated.Value(1));
   const savedScaleRef = useRef(1);
   const pinchRef = useRef<PinchGestureHandler>(null);
   const doubleTapRef = useRef<TapGestureHandler>(null);
@@ -135,7 +135,9 @@ export default function RecordingDetail() {
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const photoListRef = useRef<FlatList>(null);
   const notesRef = useRef(notesText);
-  notesRef.current = notesText;
+  useLayoutEffect(() => {
+    notesRef.current = notesText;
+  }, [notesText]);
 
   const savedNotesRef = useRef(recording?.notes || '');
 

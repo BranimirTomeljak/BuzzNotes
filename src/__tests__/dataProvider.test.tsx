@@ -110,8 +110,9 @@ function backup(recordings: object[]): string {
 let data: ReturnType<typeof useData>;
 let renderer: { unmount: () => void } | undefined;
 
-function Probe() {
-  data = useData();
+// Hands useData() to a prop; assigning a module variable in render breaks react-hooks/globals.
+function Probe({ onData }: { onData: (value: ReturnType<typeof useData>) => void }) {
+  onData(useData());
   return null;
 }
 
@@ -119,7 +120,7 @@ async function renderProvider() {
   await act(async () => {
     renderer = create(
       <DataProvider>
-        <Probe />
+        <Probe onData={(value) => (data = value)} />
       </DataProvider>,
     );
   });
