@@ -76,7 +76,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - **Framework**: jest-expo preset
 - **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
-- **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there. Its async `copy` and `write` settle on a later tick, as the native calls do, so a missing `await` fails a test.
+- **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there. Its async `copy` and `write` settle on a later tick, as the native calls do, so a missing `await` fails a test. Writes honour `append` and create a missing file, as Android does.
 - **Coverage**: formatting utils, sorting utils, theme, responsive hook, data reducer, export/import, photo and recording file storage, plural forms, the location card, the record screen's start and stop handling, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
@@ -203,7 +203,7 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 
 ### Export/Import
 - Export creates a `.buzznotes.json` file with all data + audio files + photos encoded as base64
-- Export reads media one file at a time. Since SDK 58 the native `base64()` reads run in parallel, each holds about four times its file's size on the Java heap, and a read that fails (out of memory included) leaves that file out of the backup without a warning
+- Export reads media one file at a time and writes the file one recording at a time (`writeSync` with `append: true`), so memory holds one recording's media, not the whole backup; the text is the same as one `JSON.stringify` of the payload. Since SDK 58 the native `base64()` reads run in parallel, each holds about four times its file's size on the Java heap, and a read that fails (out of memory included) leaves that file out of the backup without a warning. Import still reads the whole file at once, so a phone can export a backup that is too large for it to import
 - Uses `expo-sharing` to share via email, Drive, Bluetooth, etc.
 - Import uses `File.pickFileAsync()` from expo-file-system to select a file. A cancelled pick rejects with code `ERR_PICKER_CANCELLED` (it never resolves to null); `importData` turns that into `null`, so no error toast appears. It keeps the deprecated `(initialUri, mimeType)` form on purpose: the options form reports every picker error as a cancel
 - Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths

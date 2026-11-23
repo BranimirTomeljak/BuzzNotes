@@ -101,6 +101,15 @@ function fromBase64(text: string): Uint8Array {
   return Uint8Array.from(atob(text), (char) => char.charCodeAt(0));
 }
 
+function concat(first: Uint8Array, second: Uint8Array): Uint8Array {
+  const bytes = new Uint8Array(first.length + second.length);
+  bytes.set(first);
+  bytes.set(second, first.length);
+  return bytes;
+}
+
+type WriteOptions = { encoding?: 'utf8' | 'base64'; append?: boolean };
+
 export class File {
   static pickFileAsync: jest.Mock = jest.fn();
   private readonly loc: Loc;
@@ -130,14 +139,20 @@ export class File {
     writeBytes(this.loc, new Uint8Array());
   }
 
-  write(content: string | Uint8Array, options?: { encoding?: 'utf8' | 'base64' }): Promise<void> {
+  write(content: string | Uint8Array, options?: WriteOptions): Promise<void> {
     return later(() => this.writeSync(content, options));
   }
 
-  writeSync(content: string | Uint8Array, options?: { encoding?: 'utf8' | 'base64' }): void {
-    if (typeof content !== 'string') writeBytes(this.loc, content.slice());
-    else if (options?.encoding === 'base64') writeBytes(this.loc, fromBase64(content));
-    else writeBytes(this.loc, new TextEncoder().encode(content));
+  // Like Android: creates a missing file, then truncates it unless append is set.
+  writeSync(content: string | Uint8Array, options?: WriteOptions): void {
+    const bytes =
+      typeof content !== 'string'
+        ? content.slice()
+        : options?.encoding === 'base64'
+          ? fromBase64(content)
+          : new TextEncoder().encode(content);
+    const kept = options?.append && isFile(this.loc) ? readBytes(this.loc) : new Uint8Array();
+    writeBytes(this.loc, concat(kept, bytes));
   }
 
   async text(): Promise<string> {

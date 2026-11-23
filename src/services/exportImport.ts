@@ -29,9 +29,24 @@ export async function exportData(
   beehives: Beehive[],
   recordings: Recording[],
 ): Promise<void> {
+  // Write to cache dir
+  const cacheDir = new Directory(Paths.cache, 'exports');
+  if (!cacheDir.exists) {
+    cacheDir.create();
+  }
+  const exportFile = new File(cacheDir, 'buzznotes-export.buzznotes.json');
+
+  // Write one recording at a time, so memory never holds more than one recording's media.
+  const head: Omit<ExportData, 'recordings'> = {
+    version: 1,
+    exportedAt: Date.now(),
+    locations,
+    beehives,
+  };
+  exportFile.writeSync(`${JSON.stringify(head).slice(0, -1)},"recordings":[`);
+
   // Read media one file at a time; parallel native reads can exhaust Android's Java heap.
-  const recordingsWithAudio: ExportRecording[] = [];
-  for (const rec of recordings) {
+  for (const [index, rec] of recordings.entries()) {
     let audioBase64: string | undefined;
     let photosBase64: string[] | undefined;
 
@@ -63,26 +78,10 @@ export async function exportData(
       }
     }
 
-    recordingsWithAudio.push({ ...rec, audioBase64, photosBase64 });
+    const item: ExportRecording = { ...rec, audioBase64, photosBase64 };
+    exportFile.writeSync(`${index > 0 ? ',' : ''}${JSON.stringify(item)}`, { append: true });
   }
-
-  const exportPayload: ExportData = {
-    version: 1,
-    exportedAt: Date.now(),
-    locations,
-    beehives,
-    recordings: recordingsWithAudio,
-  };
-
-  const json = JSON.stringify(exportPayload);
-
-  // Write to cache dir
-  const cacheDir = new Directory(Paths.cache, 'exports');
-  if (!cacheDir.exists) {
-    cacheDir.create();
-  }
-  const exportFile = new File(cacheDir, 'buzznotes-export.buzznotes.json');
-  exportFile.writeSync(json);
+  exportFile.writeSync(']}', { append: true });
 
   // Share the file
   await Sharing.shareAsync(exportFile.uri, {

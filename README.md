@@ -79,7 +79,7 @@ EAS keeps the Android version code (`appVersionSource: remote`) and increments i
 ## Known limitations
 
 - No accounts or sync: data lives on one device. Export and Import are the only reliable way to move it; Android backup or a phone-to-phone transfer may also copy it.
-- Export and import hold the whole file in memory, with audio and photos as base64, so very large backups may run out of memory on some phones.
+- Import holds the whole backup in memory, with audio and photos as base64, so very large backups may run out of memory on some phones. Export writes the file one recording at a time, so a phone can create a backup that is too large for it to import.
 - No crash reporting beyond Google Play's Android vitals.
 - Screens have almost no tests; only the record screen's start and stop handling is covered. Jest covers the reducer, the data provider and persistence, file storage, export/import, plural forms, release config, the theme, the responsive hook and utilities.
 

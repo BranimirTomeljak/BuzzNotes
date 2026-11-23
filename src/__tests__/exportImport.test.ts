@@ -177,6 +177,47 @@ describe('exportData + importData', () => {
     expect(exported[0].photosBase64).toEqual([btoa('PHOTO-0'), btoa('PHOTO-1')]);
     expect(exported[1].audioBase64).toBe(btoa('AUDIO-2'));
   });
+
+  it('writes the backup one recording at a time, in the same version-1 text', async () => {
+    const second = { ...rec, id: 'r2', localPath: `${DOC}/recordings/r2.m4a`, photos: [] };
+    fakeFs.seed(rec.localPath, 'AUDIO-1');
+    fakeFs.seed(rec.photos![0], 'PHOTO-0');
+    fakeFs.seed(rec.photos![1], 'PHOTO-1');
+    fakeFs.seed(second.localPath, 'AUDIO-2');
+    fakeFs.seed(EXPORT_URI, 'an older and much longer export file that must not survive');
+    const writes: string[] = [];
+    const writeSync = File.prototype.writeSync;
+    jest.spyOn(File.prototype, 'writeSync').mockImplementation(function (
+      this: File,
+      content,
+      options,
+    ) {
+      writes.push(String(content));
+      writeSync.call(this, content, options);
+    });
+
+    await exportData([loc], [hive], [rec, second]);
+
+    const audio = [btoa('AUDIO-1'), btoa('AUDIO-2')];
+    expect(writes.map((text) => audio.filter((a) => text.includes(a)).length)).not.toContain(2);
+    const json = fakeFs.read(EXPORT_URI)!;
+    expect(json).toBe(
+      JSON.stringify({
+        version: 1,
+        exportedAt: JSON.parse(json).exportedAt,
+        locations: [loc],
+        beehives: [hive],
+        recordings: [
+          {
+            ...rec,
+            audioBase64: btoa('AUDIO-1'),
+            photosBase64: [btoa('PHOTO-0'), btoa('PHOTO-1')],
+          },
+          { ...second, audioBase64: btoa('AUDIO-2') },
+        ],
+      }),
+    );
+  });
 });
 
 describe('importData', () => {
