@@ -5,21 +5,27 @@ import RecordScreen from '../../app/record';
 import PriorityPicker from '../components/PriorityPicker';
 import { Priority } from '../models/types';
 
-// Mirrors expo-audio 58: currentTime counts seconds while recording, and stop() resets it to 0.
+// Mirrors expo-audio 58: currentTime counts seconds and stop() resets it; preparing twice throws.
 const mockRecorder = {
   uri: 'file:///data/user/0/app/cache/Audio/recording-1.m4a',
   currentTime: 0,
   isRecording: false,
-  prepareToRecordAsync: jest.fn(async () => {}),
+  isPrepared: false,
+  prepareToRecordAsync: jest.fn(async () => {
+    if (mockRecorder.isPrepared || mockRecorder.isRecording) throw new Error('Already prepared');
+    mockRecorder.isPrepared = true;
+  }),
   record: jest.fn(() => {
     mockRecorder.isRecording = true;
   }),
   stop: jest.fn(async () => {
     mockRecorder.isRecording = false;
+    mockRecorder.isPrepared = false;
     mockRecorder.currentTime = 0;
   }),
 };
 const mockAddRecording = jest.fn(async (_params: { duration: number }) => {});
+const mockRequestPermissions = jest.fn(async () => true);
 
 jest.mock('expo-audio', () => ({ useAudioRecorder: () => mockRecorder }));
 jest.mock('expo-router', () => ({
@@ -48,7 +54,7 @@ jest.mock('../contexts/DataContext', () => ({
 }));
 jest.mock('../services/audio', () => ({
   VOICE_NOTE_PRESET: {},
-  requestPermissions: async () => true,
+  requestPermissions: () => mockRequestPermissions(),
   configureRecordingMode: async () => {},
   configurePlaybackMode: async () => {},
 }));
@@ -90,6 +96,7 @@ afterEach(() => {
   renderer = undefined;
   mockRecorder.currentTime = 0;
   mockRecorder.isRecording = false;
+  mockRecorder.isPrepared = false;
   jest.clearAllMocks();
 });
 
@@ -216,5 +223,66 @@ describe('RecordScreen stop', () => {
 
     expect(mockRecorder.stop).toHaveBeenCalledTimes(2);
     expect(texts()).toContain('recordings.duration: 00:03');
+  });
+});
+
+describe('RecordScreen start', () => {
+  async function render() {
+    await act(async () => {
+      renderer = create(<RecordScreen />);
+    });
+  }
+
+  it('ignores a second start tap while the first is still starting', async () => {
+    await render();
+
+    const start = recordButton().props.onPress;
+    await act(async () => {
+      await Promise.all([start?.(), start?.()]);
+    });
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockRecorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
+    expect(texts()).toContain('recordings.tapToStop');
+  });
+
+  it('ignores a start tap that lands after the first start but before the re-render', async () => {
+    await render();
+
+    const start = recordButton().props.onPress;
+    await act(async () => {
+      await start?.();
+      await start?.();
+    });
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockRecorder.prepareToRecordAsync).toHaveBeenCalledTimes(1);
+    expect(texts()).toContain('recordings.tapToStop');
+  });
+
+  it('starts on the next tap after the microphone permission was denied', async () => {
+    await render();
+    mockRequestPermissions.mockResolvedValueOnce(false);
+
+    await press(recordButton());
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ text1: 'recordings.micPermission' }),
+    );
+    await press(recordButton());
+
+    expect(mockRecorder.record).toHaveBeenCalledTimes(1);
+    expect(texts()).toContain('recordings.tapToStop');
+  });
+
+  it('starts on the next tap after a start failed', async () => {
+    await render();
+    mockRecorder.prepareToRecordAsync.mockRejectedValueOnce(new Error('Microphone busy'));
+
+    await press(recordButton());
+    expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ text1: 'common.error' }));
+    await press(recordButton());
+
+    expect(mockRecorder.record).toHaveBeenCalledTimes(1);
+    expect(texts()).toContain('recordings.tapToStop');
   });
 });

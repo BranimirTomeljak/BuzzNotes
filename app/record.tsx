@@ -62,6 +62,7 @@ export default function RecordScreen() {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
 
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startingRef = useRef(false);
   const stoppingRef = useRef(false);
 
   useEffect(() => {
@@ -78,8 +79,12 @@ export default function RecordScreen() {
   const availableBeehives = selectedLocationId ? getBeehivesForLocation(selectedLocationId) : [];
 
   const handleStartRecording = useCallback(async () => {
+    // Ignore start taps until a start or stop fails; preparing the recorder twice throws.
+    if (startingRef.current) return;
+    startingRef.current = true;
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
+      startingRef.current = false;
       Toast.show({ type: 'error', text1: t('recordings.micPermission'), visibilityTime: 2000 });
       return;
     }
@@ -96,6 +101,7 @@ export default function RecordScreen() {
         setRecordingDuration((d) => d + 1);
       }, 1000);
     } catch {
+      startingRef.current = false;
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
   }, [recorder, t]);
@@ -123,6 +129,7 @@ export default function RecordScreen() {
       setRecordedDuration(Math.round(seconds));
       setStep('priority');
     } catch {
+      startingRef.current = false;
       setIsRecording(false);
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
