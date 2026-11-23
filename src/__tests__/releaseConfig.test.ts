@@ -1,5 +1,6 @@
 import appJson from '../../app.json';
 import easJson from '../../eas.json';
+import packageJson from '../../package.json';
 
 const android = appJson.expo.android;
 
@@ -27,6 +28,11 @@ describe('Android permissions', () => {
 });
 
 describe('Android release build', () => {
+  it('stays light, which needs expo-system-ui on Android', () => {
+    expect(appJson.expo.userInterfaceStyle).toBe('light');
+    expect(packageJson.dependencies).toHaveProperty('expo-system-ui');
+  });
+
   it('keeps R8 off, as on SDK 54', () => {
     const entry = appJson.expo.plugins.find(
       (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
