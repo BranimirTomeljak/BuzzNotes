@@ -146,6 +146,8 @@ describe('RecordScreen stop', () => {
     expect(Toast.show).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'error', text1: 'common.error' }),
     );
+    expect(mockRecorder.record).toHaveBeenCalledTimes(1);
+    expect(mockRecorder.stop).toHaveBeenCalledTimes(1);
     expect(texts()).toContain('recordings.tapToStart');
     expect(texts().some((text) => text.startsWith('recordings.duration'))).toBe(false);
   });
