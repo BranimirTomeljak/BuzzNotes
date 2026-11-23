@@ -5,6 +5,15 @@ import RecordScreen from '../../app/record';
 import PriorityPicker from '../components/PriorityPicker';
 import { Priority } from '../models/types';
 
+type MockStatus = { isFinished: boolean; hasError: boolean };
+const mockListeners = new Set<(status: MockStatus) => void>();
+
+// Android posts the finished event on its own, so it reaches JS after stop() resolves.
+function mockFinish(hasError: boolean) {
+  const listeners = [...mockListeners];
+  setTimeout(() => listeners.forEach((listener) => listener({ isFinished: true, hasError })), 0);
+}
+
 // Mirrors expo-audio 58: currentTime counts seconds and stop() resets it; preparing twice throws.
 const mockRecorder = {
   uri: 'file:///data/user/0/app/cache/Audio/recording-1.m4a',
@@ -18,12 +27,21 @@ const mockRecorder = {
   record: jest.fn(() => {
     mockRecorder.isRecording = true;
   }),
+  addListener: jest.fn((_event: string, listener: (status: MockStatus) => void) => {
+    mockListeners.add(listener);
+    return { remove: () => mockListeners.delete(listener) };
+  }),
   stop: jest.fn(async () => {
-    mockRecorder.isRecording = false;
-    mockRecorder.isPrepared = false;
-    mockRecorder.currentTime = 0;
+    mockStop();
+    mockFinish(false);
   }),
 };
+
+function mockStop() {
+  mockRecorder.isRecording = false;
+  mockRecorder.isPrepared = false;
+  mockRecorder.currentTime = 0;
+}
 const mockAddRecording = jest.fn(async (_params: { duration: number }) => {});
 const mockRequestPermissions = jest.fn(async () => true);
 
@@ -97,6 +115,7 @@ afterEach(() => {
   mockRecorder.currentTime = 0;
   mockRecorder.isRecording = false;
   mockRecorder.isPrepared = false;
+  mockListeners.clear();
   jest.clearAllMocks();
 });
 
@@ -177,10 +196,12 @@ describe('RecordScreen stop', () => {
     mockRecorder.currentTime = 7.4;
     let finishStop: () => void = () => {};
     mockRecorder.stop.mockImplementationOnce(() => {
-      mockRecorder.isRecording = false;
-      mockRecorder.currentTime = 0;
+      mockStop();
       return new Promise<void>((resolve) => {
-        finishStop = () => resolve();
+        finishStop = () => {
+          resolve();
+          mockFinish(false);
+        };
       });
     });
 
@@ -223,6 +244,31 @@ describe('RecordScreen stop', () => {
 
     expect(mockRecorder.stop).toHaveBeenCalledTimes(2);
     expect(texts()).toContain('recordings.duration: 00:03');
+  });
+
+  it('treats a stop the recorder reports as failed like a too-short one', async () => {
+    mockRecorder.stop.mockImplementationOnce(async () => {
+      mockStop();
+      mockFinish(true);
+    });
+    await recordFor(20);
+
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'common.error' }),
+    );
+    expect(texts()).toEqual([
+      'recordings.add',
+      expect.stringMatching(/^\d\d:\d\d$/),
+      'recordings.tapToStart',
+    ]);
+  });
+
+  it('goes on when the recorder sends no finished event', async () => {
+    mockRecorder.stop.mockImplementationOnce(async () => mockStop());
+    await recordFor(5);
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(texts()).toContain('recordings.duration: 00:05');
   });
 });
 

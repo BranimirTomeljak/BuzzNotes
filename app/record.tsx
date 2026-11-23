@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder } from 'expo-audio';
+import type { AudioRecorder, RecordingStatus } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +35,23 @@ import { hapticMedium, hapticSuccess } from '../src/utils/haptics';
 type Step = 'select' | 'record' | 'priority';
 
 const MIN_RECORDING_SECONDS = 1;
+const FINISH_WAIT_MS = 1000;
+
+// Resolves with the recorder's next finished status, or null if none comes within the wait.
+function nextFinish(recorder: AudioRecorder): Promise<RecordingStatus | null> {
+  let settle: (status: RecordingStatus | null) => void = () => {};
+  const done = new Promise<RecordingStatus | null>((resolve) => {
+    settle = resolve;
+  });
+  const subscription = recorder.addListener('recordingStatusUpdate', (status) => {
+    if (status.isFinished) settle(status);
+  });
+  const timer = setTimeout(() => settle(null), FINISH_WAIT_MS);
+  return done.finally(() => {
+    clearTimeout(timer);
+    subscription.remove();
+  });
+}
 
 export default function RecordScreen() {
   const router = useRouter();
@@ -118,9 +136,12 @@ export default function RecordScreen() {
     try {
       // The recorder resets currentTime to 0 when it stops, so read the length first.
       const seconds = recorder.currentTime;
+      const finished = nextFinish(recorder);
       await recorder.stop();
       // Android has no audio this early, and stop() no longer rejects for it, so fail like it used to.
       if (seconds < MIN_RECORDING_SECONDS) throw new Error('Recording too short');
+      // A later failure also resolves stop(); the finished event, sometimes after it, reports it.
+      if ((await finished)?.hasError) throw new Error('Recording failed');
       hapticMedium();
       await configurePlaybackMode();
       const uri = recorder.uri;
