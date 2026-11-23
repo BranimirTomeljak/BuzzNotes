@@ -152,10 +152,10 @@ describe('exportData + importData', () => {
   });
 
   it('reads media files one at a time', async () => {
-    const first = { ...rec, photos: [rec.photos![0]] };
     const second = { ...rec, id: 'r2', localPath: `${DOC}/recordings/r2.m4a`, photos: [] };
-    fakeFs.seed(first.localPath, 'AUDIO-1');
-    fakeFs.seed(first.photos[0], 'PHOTO-0');
+    fakeFs.seed(rec.localPath, 'AUDIO-1');
+    fakeFs.seed(rec.photos![0], 'PHOTO-0');
+    fakeFs.seed(rec.photos![1], 'PHOTO-1');
     fakeFs.seed(second.localPath, 'AUDIO-2');
     const base64 = File.prototype.base64;
     let reading = 0;
@@ -169,12 +169,12 @@ describe('exportData + importData', () => {
       return base64.call(this);
     });
 
-    await exportData([loc], [hive], [first, second]);
+    await exportData([loc], [hive], [rec, second]);
 
     expect(mostAtOnce).toBe(1);
     const exported = JSON.parse(fakeFs.read(EXPORT_URI)!).recordings;
     expect(exported[0].audioBase64).toBe(btoa('AUDIO-1'));
-    expect(exported[0].photosBase64).toEqual([btoa('PHOTO-0')]);
+    expect(exported[0].photosBase64).toEqual([btoa('PHOTO-0'), btoa('PHOTO-1')]);
     expect(exported[1].audioBase64).toBe(btoa('AUDIO-2'));
   });
 });
