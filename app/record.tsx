@@ -62,6 +62,7 @@ export default function RecordScreen() {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
 
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stoppingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -88,6 +89,7 @@ export default function RecordScreen() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       hapticMedium();
+      stoppingRef.current = false;
       setIsRecording(true);
       setRecordingDuration(0);
       durationInterval.current = setInterval(() => {
@@ -99,6 +101,9 @@ export default function RecordScreen() {
   }, [recorder, t]);
 
   const handleStopRecording = useCallback(async () => {
+    // A second tap before the re-render would read the reset time and fail a good recording.
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
     if (durationInterval.current) {
       clearInterval(durationInterval.current);
       durationInterval.current = null;
