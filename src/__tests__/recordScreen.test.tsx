@@ -186,6 +186,24 @@ describe('RecordScreen stop', () => {
     expect(texts()).toContain('recordings.duration: 00:07');
   });
 
+  it('ignores a stop tap that lands after the first stop but before the re-render', async () => {
+    await act(async () => {
+      renderer = create(<RecordScreen />);
+    });
+    await press(recordButton());
+    mockRecorder.currentTime = 7.4;
+
+    const stop = recordButton().props.onPress;
+    await act(async () => {
+      await stop?.();
+      await stop?.();
+    });
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(mockRecorder.stop).toHaveBeenCalledTimes(1);
+    expect(texts()).toContain('recordings.duration: 00:07');
+  });
+
   it('still stops the next recording after a too-short one', async () => {
     await recordFor(0.4);
     await press(recordButton());
