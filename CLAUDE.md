@@ -203,6 +203,7 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 
 ### Export/Import
 - Export creates a `.buzznotes.json` file with all data + audio files + photos encoded as base64
+- Export reads media one file at a time. Since SDK 58 the native `base64()` reads run in parallel, each holds about four times its file's size on the Java heap, and a read that fails (out of memory included) leaves that file out of the backup without a warning
 - Uses `expo-sharing` to share via email, Drive, Bluetooth, etc.
 - Import uses `File.pickFileAsync()` from expo-file-system to select a file. A cancelled pick rejects with code `ERR_PICKER_CANCELLED` (it never resolves to null); `importData` turns that into `null`, so no error toast appears. It keeps the deprecated `(initialUri, mimeType)` form on purpose: the options form reports every picker error as a cancel
 - Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths

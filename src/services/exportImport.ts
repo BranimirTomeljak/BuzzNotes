@@ -29,43 +29,42 @@ export async function exportData(
   beehives: Beehive[],
   recordings: Recording[],
 ): Promise<void> {
-  // Read audio files and photos as base64
-  const recordingsWithAudio = await Promise.all(
-    recordings.map(async (rec) => {
-      let audioBase64: string | undefined;
-      let photosBase64: string[] | undefined;
+  // Read media one file at a time; parallel native reads can exhaust Android's Java heap.
+  const recordingsWithAudio: ExportRecording[] = [];
+  for (const rec of recordings) {
+    let audioBase64: string | undefined;
+    let photosBase64: string[] | undefined;
 
-      if (Platform.OS !== 'web') {
-        if (rec.localPath && isAppMediaPath(rec.localPath)) {
-          try {
-            const file = new File(rec.localPath);
-            if (file.exists) {
-              audioBase64 = await file.base64();
-            }
-          } catch {
-            // Skip audio if file can't be read
+    if (Platform.OS !== 'web') {
+      if (rec.localPath && isAppMediaPath(rec.localPath)) {
+        try {
+          const file = new File(rec.localPath);
+          if (file.exists) {
+            audioBase64 = await file.base64();
           }
-        }
-
-        if (rec.photos?.length) {
-          photosBase64 = [];
-          for (const photoPath of rec.photos) {
-            if (!isAppMediaPath(photoPath)) continue;
-            try {
-              const file = new File(photoPath);
-              if (file.exists) {
-                photosBase64.push(await file.base64());
-              }
-            } catch {
-              // Skip photo if file can't be read
-            }
-          }
+        } catch {
+          // Skip audio if file can't be read
         }
       }
 
-      return { ...rec, audioBase64, photosBase64 };
-    }),
-  );
+      if (rec.photos?.length) {
+        photosBase64 = [];
+        for (const photoPath of rec.photos) {
+          if (!isAppMediaPath(photoPath)) continue;
+          try {
+            const file = new File(photoPath);
+            if (file.exists) {
+              photosBase64.push(await file.base64());
+            }
+          } catch {
+            // Skip photo if file can't be read
+          }
+        }
+      }
+    }
+
+    recordingsWithAudio.push({ ...rec, audioBase64, photosBase64 });
+  }
 
   const exportPayload: ExportData = {
     version: 1,

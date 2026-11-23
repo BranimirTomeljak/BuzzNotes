@@ -150,6 +150,33 @@ describe('exportData + importData', () => {
     expect(exported.audioBase64).toBe(btoa('AUDIO-1'));
     expect(exported.photosBase64).toEqual([btoa('PHOTO-0')]);
   });
+
+  it('reads media files one at a time', async () => {
+    const first = { ...rec, photos: [rec.photos![0]] };
+    const second = { ...rec, id: 'r2', localPath: `${DOC}/recordings/r2.m4a`, photos: [] };
+    fakeFs.seed(first.localPath, 'AUDIO-1');
+    fakeFs.seed(first.photos[0], 'PHOTO-0');
+    fakeFs.seed(second.localPath, 'AUDIO-2');
+    const base64 = File.prototype.base64;
+    let reading = 0;
+    let mostAtOnce = 0;
+    jest.spyOn(File.prototype, 'base64').mockImplementation(async function (this: File) {
+      reading += 1;
+      mostAtOnce = Math.max(mostAtOnce, reading);
+      // Native reads settle later, on another thread.
+      await new Promise((settle) => setTimeout(settle, 0));
+      reading -= 1;
+      return base64.call(this);
+    });
+
+    await exportData([loc], [hive], [first, second]);
+
+    expect(mostAtOnce).toBe(1);
+    const exported = JSON.parse(fakeFs.read(EXPORT_URI)!).recordings;
+    expect(exported[0].audioBase64).toBe(btoa('AUDIO-1'));
+    expect(exported[0].photosBase64).toEqual([btoa('PHOTO-0')]);
+    expect(exported[1].audioBase64).toBe(btoa('AUDIO-2'));
+  });
 });
 
 describe('importData', () => {
