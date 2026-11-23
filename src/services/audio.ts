@@ -1,5 +1,9 @@
-import { requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
-import { IOSOutputFormat, AudioQuality } from 'expo-audio';
+import {
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  IOSOutputFormat,
+  AudioQuality,
+} from 'expo-audio';
 import type { RecordingOptions } from 'expo-audio';
 import { Platform } from 'react-native';
 

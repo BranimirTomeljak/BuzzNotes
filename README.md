@@ -25,7 +25,7 @@ Built with Expo and React Native for Android, with a web build used during devel
 
 ## Stack
 
-Expo SDK 58 · React Native 0.88 (New Architecture, Hermes) · React 19.3 · TypeScript 6.0 (strict) · Expo Router 58 · expo-audio 58 · expo-image-picker 58 · expo-file-system 58 · AsyncStorage 2.2 · i18next 27 (with the intl-pluralrules polyfill) · Jest 30 (jest-expo) · ESLint 8 · Prettier 3 · GitHub Actions · EAS Build
+Expo SDK 58 · React Native 0.88 (New Architecture, Hermes) · React 19.3 · TypeScript 6.0 (strict) · Expo Router 58 · expo-audio 58 · expo-image-picker 58 · expo-file-system 58 · AsyncStorage 2.2 · i18next 27 (with the intl-pluralrules polyfill) · Jest 30 (jest-expo) · ESLint 9 · Prettier 3 · GitHub Actions · EAS Build
 
 ## Architecture
 

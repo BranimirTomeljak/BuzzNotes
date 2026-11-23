@@ -82,7 +82,7 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 
 ### Code Quality
 
-- **ESLint**: `eslint-config-expo` + `eslint-config-prettier` (`.eslintrc.js`). The React Compiler rules `react-hooks/refs` and `react-hooks/globals` (new in eslint-config-expo 58) are on; the only suppression is the slider's `PanResponder.create`, whose handlers read layout refs on touches
+- **ESLint**: ESLint 9 with `eslint-config-expo` + `eslint-config-prettier` in the flat `eslint.config.js`; ESLint 10 waits on the `eslint-plugin-react` and `eslint-plugin-import` versions that eslint-config-expo 58 depends on. The config gives `jest.setup.js` the `jest` global and turns off `import/no-named-as-default-member` for `src/i18n/index.ts`, where i18next's documented `i18n.use()` trips it. The React Compiler rules `react-hooks/refs` and `react-hooks/globals` (new in eslint-config-expo 58) are on; the only suppression is the slider's `PanResponder.create`, whose handlers read layout refs on touches
 - **Prettier**: single quotes, trailing commas, 100 char width (`.prettierrc`)
 - Only `firebaseConfig.ts` has lint warnings (unused imports kept intentionally for future use)
 
