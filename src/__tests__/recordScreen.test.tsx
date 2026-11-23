@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { Text, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
 import RecordScreen from '../../app/record';
 import PriorityPicker from '../components/PriorityPicker';
 import { Priority } from '../models/types';
@@ -137,5 +138,22 @@ describe('RecordScreen stop', () => {
     await press(buttonWith('common.save'));
 
     expect(mockAddRecording).toHaveBeenCalledWith(expect.objectContaining({ duration: 7 }));
+  });
+
+  it('treats a stop under one second as failed and stays on the record step', async () => {
+    await recordFor(0.4);
+
+    expect(Toast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'error', text1: 'common.error' }),
+    );
+    expect(texts()).toContain('recordings.tapToStart');
+    expect(texts().some((text) => text.startsWith('recordings.duration'))).toBe(false);
+  });
+
+  it('accepts a one-second recording', async () => {
+    await recordFor(1);
+
+    expect(Toast.show).not.toHaveBeenCalled();
+    expect(texts()).toContain('recordings.duration: 00:01');
   });
 });

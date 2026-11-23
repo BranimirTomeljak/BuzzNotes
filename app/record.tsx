@@ -33,6 +33,8 @@ import { hapticMedium, hapticSuccess } from '../src/utils/haptics';
 
 type Step = 'select' | 'record' | 'priority';
 
+const MIN_RECORDING_SECONDS = 1;
+
 export default function RecordScreen() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -104,14 +106,16 @@ export default function RecordScreen() {
 
     try {
       // The recorder resets currentTime to 0 when it stops, so read the length first.
-      const duration = Math.round(recorder.currentTime);
+      const seconds = recorder.currentTime;
       await recorder.stop();
+      // Android has no audio this early, and stop() no longer rejects for it, so fail like it used to.
+      if (seconds < MIN_RECORDING_SECONDS) throw new Error('Recording too short');
       hapticMedium();
       await configurePlaybackMode();
       const uri = recorder.uri;
       setIsRecording(false);
       setRecordingUri(uri);
-      setRecordedDuration(duration);
+      setRecordedDuration(Math.round(seconds));
       setStep('priority');
     } catch {
       setIsRecording(false);
