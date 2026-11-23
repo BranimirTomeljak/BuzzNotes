@@ -1,6 +1,7 @@
 import React, { act } from 'react';
 import { Text } from 'react-native';
 import LocationCard from '../components/LocationCard';
+import i18n from '../i18n';
 import { Location } from '../models/types';
 
 // Icons render as glyph Text nodes and load fonts asynchronously; the stats are what matter here.
@@ -16,14 +17,7 @@ const { create } = require('react-test-renderer') as {
   };
 };
 
-let i18n: typeof import('../i18n').default;
 let renderer: ReturnType<typeof create> | undefined;
-
-beforeAll(() => {
-  const info = jest.spyOn(console, 'info').mockImplementation(() => {});
-  i18n = require('../i18n').default;
-  info.mockRestore();
-});
 
 afterEach(() => {
   act(() => renderer?.unmount());

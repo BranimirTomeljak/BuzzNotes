@@ -4,9 +4,7 @@ let i18n: typeof import('../i18n').default;
 beforeAll(() => {
   // Hermes on Android has no Intl.PluralRules, so load the app's i18n without it, as on the phone.
   delete (Intl as { PluralRules?: unknown }).PluralRules;
-  const info = jest.spyOn(console, 'info').mockImplementation(() => {});
   i18n = require('../i18n').default;
-  info.mockRestore();
 });
 
 afterAll(() => {
