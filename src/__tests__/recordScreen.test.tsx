@@ -148,8 +148,7 @@ describe('RecordScreen stop', () => {
     );
     expect(mockRecorder.record).toHaveBeenCalledTimes(1);
     expect(mockRecorder.stop).toHaveBeenCalledTimes(1);
-    expect(texts()).toContain('recordings.tapToStart');
-    expect(texts().some((text) => text.startsWith('recordings.duration'))).toBe(false);
+    expect(texts()).toEqual(['recordings.add', '00:00', 'recordings.tapToStart']);
   });
 
   it('accepts a one-second recording', async () => {
