@@ -25,7 +25,7 @@ Built with Expo and React Native for Android, with a web build used during devel
 
 ## Stack
 
-Expo SDK 54 · React Native 0.81 (New Architecture, Hermes) · React 19.1 · TypeScript 5.9 (strict) · Expo Router 6 · expo-audio 1.1 · expo-image-picker 17 · expo-file-system 19 · AsyncStorage 2.2 · i18next 25 (with the intl-pluralrules polyfill) · Jest 29 (jest-expo) · ESLint 8 · Prettier 3 · GitHub Actions · EAS Build
+Expo SDK 58 · React Native 0.88 (New Architecture, Hermes) · React 19.3 · TypeScript 6.0 (strict) · Expo Router 58 · expo-audio 58 · expo-image-picker 58 · expo-file-system 58 · AsyncStorage 2.2 · i18next 27 (with the intl-pluralrules polyfill) · Jest 30 (jest-expo) · ESLint 8 · Prettier 3 · GitHub Actions · EAS Build
 
 ## Architecture
 
@@ -40,7 +40,7 @@ Expo SDK 54 · React Native 0.81 (New Architecture, Hermes) · React 19.1 · Typ
 
 ## Getting started
 
-Requires Node 20.19.4 or newer, the minimum for React Native 0.81 and Metro; CI uses the latest Node 20.
+Requires Node 22.13 or newer on Node 22, 24.3 or newer on Node 24, or Node 26 and later, the minimums for Expo SDK 58, React Native 0.88 and Metro; CI uses the latest Node 22.
 
 ```bash
 npm ci

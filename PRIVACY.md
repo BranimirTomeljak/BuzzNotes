@@ -45,8 +45,8 @@ Recording audio and adding photos leave temporary copies in the app's cache, whi
 | --- | --- |
 | `RECORD_AUDIO` | To record voice notes |
 | `CAMERA` | To take photos for a recording |
-| `WRITE_EXTERNAL_STORAGE` | Asked for only on Android 9 and older, where the camera component the app uses requires it before it opens the camera |
-| `READ_EXTERNAL_STORAGE` | Declared by the app template and its libraries, but never asked for; the photo picker needs no permission |
+| `WRITE_EXTERNAL_STORAGE` | Declared only up to Android 12, and asked for only on Android 9 and older, where the camera component the app uses requires it before it opens the camera |
+| `READ_EXTERNAL_STORAGE` | Declared only up to Android 12, by the app template and its libraries, but never asked for; the photo picker needs no permission |
 | `MODIFY_AUDIO_SETTINGS` | Lets the audio library set up recording and playback |
 | `VIBRATE` | For short vibrations when you tap some buttons |
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Declared by the app's file and audio libraries; BuzzNotes sends and receives nothing over the network |

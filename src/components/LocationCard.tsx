@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   hexOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   content: {

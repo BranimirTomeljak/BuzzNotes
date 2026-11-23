@@ -83,7 +83,7 @@ export async function exportData(
     cacheDir.create();
   }
   const exportFile = new File(cacheDir, 'buzznotes-export.buzznotes.json');
-  exportFile.write(json);
+  exportFile.writeSync(json);
 
   // Share the file
   await Sharing.shareAsync(exportFile.uri, {
@@ -136,12 +136,12 @@ export async function importData(existing: Recording[] = []): Promise<{
       if (local && local.updatedAt > rec.updatedAt) continue;
       if (rec.audioBase64) {
         const destFile = new File(recordingsDir, `${rec.id}.m4a`);
-        destFile.write(rec.audioBase64, { encoding: 'base64' });
+        destFile.writeSync(rec.audioBase64, { encoding: 'base64' });
       }
       if (rec.photosBase64?.length) {
         for (let i = 0; i < rec.photosBase64.length; i++) {
           const destFile = new File(photosDir, `${rec.id}_${i}.jpg`);
-          destFile.write(rec.photosBase64[i], { encoding: 'base64' });
+          destFile.writeSync(rec.photosBase64[i], { encoding: 'base64' });
         }
       }
     }

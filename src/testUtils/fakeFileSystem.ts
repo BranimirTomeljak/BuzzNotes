@@ -77,6 +77,20 @@ function removeTree(loc: Loc): void {
   }
 }
 
+// Settles on a later macrotask, as the native async calls do, so a missing await fails a test.
+function later(work: () => void): Promise<void> {
+  return new Promise((done, fail) =>
+    setTimeout(() => {
+      try {
+        work();
+        done();
+      } catch (e) {
+        fail(e);
+      }
+    }, 0),
+  );
+}
+
 function toBase64(bytes: Uint8Array): string {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -116,7 +130,11 @@ export class File {
     writeBytes(this.loc, new Uint8Array());
   }
 
-  write(content: string | Uint8Array, options?: { encoding?: 'utf8' | 'base64' }): void {
+  write(content: string | Uint8Array, options?: { encoding?: 'utf8' | 'base64' }): Promise<void> {
+    return later(() => this.writeSync(content, options));
+  }
+
+  writeSync(content: string | Uint8Array, options?: { encoding?: 'utf8' | 'base64' }): void {
     if (typeof content !== 'string') writeBytes(this.loc, content.slice());
     else if (options?.encoding === 'base64') writeBytes(this.loc, fromBase64(content));
     else writeBytes(this.loc, new TextEncoder().encode(content));
@@ -130,7 +148,11 @@ export class File {
     return toBase64(readBytes(this.loc));
   }
 
-  copy(destination: File | Directory): void {
+  copy(destination: File | Directory): Promise<void> {
+    return later(() => this.copySync(destination));
+  }
+
+  copySync(destination: File | Directory): void {
     const bytes = readBytes(this.loc);
     if (destination instanceof Directory && !destination.exists) {
       throw new Error(`Destination does not exist: ${destination.uri}`);

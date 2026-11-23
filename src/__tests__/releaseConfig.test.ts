@@ -9,6 +9,7 @@ describe('Android permissions', () => {
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
       'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.WAKE_LOCK',
     ]);
   });
 
@@ -22,6 +23,15 @@ describe('Android permissions', () => {
     'INTERNET',
   ])('never blocks %s', (name) => {
     expect(android.blockedPermissions).not.toContain(`android.permission.${name}`);
+  });
+});
+
+describe('Android release build', () => {
+  it('keeps R8 off, as on SDK 54', () => {
+    const entry = appJson.expo.plugins.find(
+      (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
+    );
+    expect(entry?.[1]).toMatchObject({ android: { enableMinifyInReleaseBuilds: false } });
   });
 });
 

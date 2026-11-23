@@ -28,7 +28,7 @@ export function savePhoto(sourceUri: string, recordingId: string, index: number)
   // The timestamp keeps names unique after a removal; Android File.copy throws if the target exists.
   const destFile = new File(dir, `${recordingId}_${Date.now()}_${index}.jpg`);
   const sourceFile = new File(sourceUri);
-  sourceFile.copy(destFile);
+  sourceFile.copySync(destFile);
   return destFile.uri;
 }
 
