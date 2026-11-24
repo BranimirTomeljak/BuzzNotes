@@ -49,7 +49,7 @@ This runs in the cloud on EAS servers (free tier: 30 builds/month). It will:
 
 Expo account required — sign up free at https://expo.dev/signup
 
-Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. Per the EAS docs, once the app exists in Play Console the first submit creates its first internal release; if Play rejects it because the app has never had an upload, upload that AAB by hand in Play Console.
+Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. `.gitignore` covers the usual key and credential file names (`*service-account*.json`, `pc-api-*.json`, `credentials.json`, `credentials/`, `*.keystore`), but keep a downloaded key outside the repository anyway. Per the EAS docs, once the app exists in Play Console the first submit creates its first internal release; if Play rejects it because the app has never had an upload, upload that AAB by hand in Play Console.
 
 ### GitHub Auto-Build
 
