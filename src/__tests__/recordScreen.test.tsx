@@ -331,4 +331,31 @@ describe('RecordScreen start', () => {
     expect(mockRecorder.record).toHaveBeenCalledTimes(1);
     expect(texts()).toContain('recordings.tapToStop');
   });
+
+  it('starts on the next tap after record() failed on a prepared recorder', async () => {
+    await render();
+    mockRecorder.record.mockImplementationOnce(() => {
+      throw new Error('start failed');
+    });
+
+    await press(recordButton());
+    expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ text1: 'common.error' }));
+    await press(recordButton());
+
+    expect(Toast.show).toHaveBeenCalledTimes(1);
+    expect(mockRecorder.record).toHaveBeenCalledTimes(2);
+    expect(texts()).toContain('recordings.tapToStop');
+  });
+
+  it('still reports a failed start when resetting the recorder fails too', async () => {
+    await render();
+    mockRecorder.record.mockImplementationOnce(() => {
+      throw new Error('start failed');
+    });
+    mockRecorder.stop.mockRejectedValueOnce(new Error('stop failed'));
+
+    await press(recordButton());
+
+    expect(Toast.show).toHaveBeenCalledWith(expect.objectContaining({ text1: 'common.error' }));
+  });
 });

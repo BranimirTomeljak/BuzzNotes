@@ -119,6 +119,12 @@ export default function RecordScreen() {
         setRecordingDuration((d) => d + 1);
       }, 1000);
     } catch {
+      // A record() that throws leaves the recorder prepared, and only a stop resets it for a retry.
+      try {
+        await recorder.stop();
+      } catch {
+        // Nothing was prepared
+      }
       startingRef.current = false;
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
