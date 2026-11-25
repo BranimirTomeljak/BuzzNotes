@@ -1,3 +1,5 @@
+// Hermes on Android has no Intl.PluralRules, which i18next needs for Croatian plural forms.
+import 'intl-pluralrules';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';

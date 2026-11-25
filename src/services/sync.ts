@@ -7,27 +7,43 @@ const KEYS = {
   recordings: '@buzznotes/recordings',
 };
 
+// Android's CursorWindow cannot read back a value much over 2 MiB, so never write one.
+const MAX_RECORDINGS_BYTES = 1_900_000;
+export const STORAGE_FULL = 'STORAGE_FULL';
+
 // Local storage operations
 export async function loadLocalData(): Promise<{
   locations: Location[];
   beehives: Beehive[];
   recordings: Recording[];
 }> {
-  try {
-    const [locationsJson, beehivesJson, recordingsJson] = await Promise.all([
-      AsyncStorage.getItem(KEYS.locations),
-      AsyncStorage.getItem(KEYS.beehives),
-      AsyncStorage.getItem(KEYS.recordings),
-    ]);
+  const [locationsJson, beehivesJson, recordingsJson] = await Promise.all([
+    AsyncStorage.getItem(KEYS.locations),
+    AsyncStorage.getItem(KEYS.beehives),
+    AsyncStorage.getItem(KEYS.recordings),
+  ]);
 
-    return {
-      locations: locationsJson ? JSON.parse(locationsJson) : [],
-      beehives: beehivesJson ? JSON.parse(beehivesJson) : [],
-      recordings: recordingsJson ? JSON.parse(recordingsJson) : [],
-    };
-  } catch {
-    return { locations: [], beehives: [], recordings: [] };
+  return {
+    locations: locationsJson ? JSON.parse(locationsJson) : [],
+    beehives: beehivesJson ? JSON.parse(beehivesJson) : [],
+    recordings: recordingsJson ? JSON.parse(recordingsJson) : [],
+  };
+}
+
+export async function saveLocalData(
+  locations: Location[],
+  beehives: Beehive[],
+  recordings: Recording[],
+): Promise<void> {
+  const recordingsJson = JSON.stringify(recordings);
+  if (new TextEncoder().encode(recordingsJson).length > MAX_RECORDINGS_BYTES) {
+    throw Object.assign(new Error('Recordings data is too large to save'), { code: STORAGE_FULL });
   }
+  await AsyncStorage.multiSet([
+    [KEYS.locations, JSON.stringify(locations)],
+    [KEYS.beehives, JSON.stringify(beehives)],
+    [KEYS.recordings, recordingsJson],
+  ]);
 }
 
 export async function saveLocalLocations(locations: Location[]): Promise<void> {

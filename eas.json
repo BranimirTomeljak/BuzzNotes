@@ -1,19 +1,27 @@
 {
   "cli": {
-    "version": ">= 18.0.0"
+    "version": ">= 18.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk",
-        "image": "latest"
+        "buildType": "apk"
       },
       "distribution": "internal"
     },
     "production": {
       "android": {
-        "buildType": "app-bundle",
-        "image": "latest"
+        "buildType": "app-bundle"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
       }
     }
   }

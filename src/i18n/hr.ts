@@ -39,8 +39,9 @@ export default {
     title: 'Košnice',
     add: 'Nova košnica',
     namePlaceholder: 'npr. Košnica 1',
-    recordingCount: '{{count}} snimka',
-    recordingCount_plural: '{{count}} snimki',
+    recordingCount_one: '{{count}} snimka',
+    recordingCount_few: '{{count}} snimke',
+    recordingCount_other: '{{count}} snimki',
     empty: 'Nema košnica',
     emptyDesc: 'Dodaj svoju prvu košnicu na ovoj lokaciji',
     delete: 'Obriši košnicu',
@@ -84,11 +85,11 @@ export default {
 
   // Onboarding
   onboarding: {
-    welcome: 'Dobrodošli u BuzzNotes',
-    subtitle: 'Vaš pčelarski dnevnik glasovnih bilješki',
-    feature1: 'Organizirajte pčelinjake po lokaciji',
-    feature2: 'Pratite svaku košnicu',
-    feature3: 'Snimajte glasovne bilješke s prioritetom',
+    welcome: 'Dobro došli u BuzzNotes',
+    subtitle: 'Tvoj pčelarski dnevnik glasovnih bilješki',
+    feature1: 'Organiziraj pčelinjake po lokaciji',
+    feature2: 'Prati svaku košnicu',
+    feature3: 'Snimaj glasovne bilješke s prioritetom',
     getStarted: 'Započni',
   },
 
@@ -115,5 +116,17 @@ export default {
     exportSuccess: 'Podaci uspješno izvezeni',
     importSuccess: 'Podaci uspješno uvezeni',
     importError: 'Greška pri uvozu podataka',
+    loadError:
+      'Spremljene podatke nije moguće učitati. Ništa nije prepisano; povuci prema dolje za ponovni pokušaj',
+    saveError: 'Promjene nije moguće spremiti',
+    storageFull:
+      'Previše podataka; promjene se ne spremaju. Izvezi sigurnosnu kopiju pa obriši stare snimke',
+    webUnavailable: 'Snimanje, fotografije te izvoz i uvoz dostupni su samo u Android aplikaciji',
+    beehiveLabel_one: 'košnica',
+    beehiveLabel_few: 'košnice',
+    beehiveLabel_other: 'košnica',
+    recordingLabel_one: 'snimka',
+    recordingLabel_few: 'snimke',
+    recordingLabel_other: 'snimki',
   },
 };

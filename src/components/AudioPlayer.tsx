@@ -16,8 +16,6 @@ interface AudioPlayerProps {
 export default function AudioPlayer({ uri, duration, onPlay, muted }: AudioPlayerProps) {
   const player = useAudioPlayer(uri, { updateInterval: 250 });
   const status = useAudioPlayerStatus(player);
-  const onPlayRef = useRef(onPlay);
-  onPlayRef.current = onPlay;
 
   const finishedRef = useRef(false);
 
@@ -39,9 +37,9 @@ export default function AudioPlayer({ uri, duration, onPlay, muted }: AudioPlaye
         finishedRef.current = false;
       }
       player.play();
-      onPlayRef.current?.();
+      onPlay?.();
     }
-  }, [uri, status.playing, player]);
+  }, [uri, status.playing, player, onPlay]);
 
   const onSliderChange = useCallback(
     (value: number) => {

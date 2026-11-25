@@ -6,20 +6,17 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useLayoutEffect,
 } from 'react';
 import { randomUUID } from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Location, Beehive, Recording, Priority } from '../models/types';
-import {
-  loadLocalData,
-  saveLocalLocations,
-  saveLocalBeehives,
-  saveLocalRecordings,
-} from '../services/sync';
+import { loadLocalData, saveLocalData, STORAGE_FULL } from '../services/sync';
 import { exportData, importData } from '../services/exportImport';
-import { deletePhotos } from '../services/photoStorage';
+import { deleteRecordingFiles } from '../services/photoStorage';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 
 const LOCAL_USER_ID_KEY = '@buzznotes/userId';
 
@@ -36,6 +33,10 @@ async function getOrCreateLocalUserId(): Promise<string> {
     await AsyncStorage.setItem(LOCAL_USER_ID_KEY, userId);
   }
   return userId;
+}
+
+function showLoadError() {
+  Toast.show({ type: 'error', text1: i18n.t('common.loadError'), visibilityTime: 6000 });
 }
 
 interface DataState {
@@ -62,6 +63,15 @@ type DataAction =
 
 export { DataState, DataAction };
 
+// Recording.locationId copies its beehive's; re-derive it and keep unchanged items by reference.
+function alignRecordingLocations(beehives: Beehive[], recordings: Recording[]): Recording[] {
+  const locationByBeehive = new Map(beehives.map((b) => [b.id, b.locationId]));
+  return recordings.map((r) => {
+    const locationId = locationByBeehive.get(r.beehiveId);
+    return locationId !== undefined && locationId !== r.locationId ? { ...r, locationId } : r;
+  });
+}
+
 export function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
     case 'SET_LOADING':
@@ -73,7 +83,7 @@ export function dataReducer(state: DataState, action: DataAction): DataState {
         ...state,
         locations: action.locations,
         beehives: action.beehives,
-        recordings: action.recordings,
+        recordings: alignRecordingLocations(action.beehives, action.recordings),
         loading: false,
       };
     case 'ADD_LOCATION':
@@ -92,11 +102,20 @@ export function dataReducer(state: DataState, action: DataAction): DataState {
       };
     case 'ADD_BEEHIVE':
       return { ...state, beehives: [...state.beehives, action.beehive] };
-    case 'UPDATE_BEEHIVE':
+    case 'UPDATE_BEEHIVE': {
+      const { locationId } = action.data;
       return {
         ...state,
         beehives: state.beehives.map((b) => (b.id === action.id ? { ...b, ...action.data } : b)),
+        // Keep updatedAt, so a move never beats newer edits from another device in a merge.
+        recordings:
+          locationId === undefined
+            ? state.recordings
+            : state.recordings.map((r) =>
+                r.beehiveId === action.id && r.locationId !== locationId ? { ...r, locationId } : r,
+              ),
       };
+    }
     case 'DELETE_BEEHIVE':
       return {
         ...state,
@@ -165,6 +184,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const userIdRef = useRef<string>('');
+  const loadFailedRef = useRef(false);
   const [state, dispatch] = useReducer(dataReducer, {
     locations: [],
     beehives: [],
@@ -172,29 +192,50 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     syncing: false,
   });
+  // Lets stable callbacks such as deleteRecording read the current recordings.
+  const recordingsRef = useRef(state.recordings);
+  useLayoutEffect(() => {
+    recordingsRef.current = state.recordings;
+  }, [state.recordings]);
 
   // Load local data on mount
   useEffect(() => {
     (async () => {
       dispatch({ type: 'SET_LOADING', loading: true });
-      userIdRef.current = await getOrCreateLocalUserId();
-      const data = await loadLocalData();
-      dispatch({
-        type: 'SET_ALL',
-        locations: data.locations,
-        beehives: data.beehives,
-        recordings: data.recordings,
-      });
+      try {
+        userIdRef.current = await getOrCreateLocalUserId();
+        const data = await loadLocalData();
+        dispatch({
+          type: 'SET_ALL',
+          locations: data.locations,
+          beehives: data.beehives,
+          recordings: data.recordings,
+        });
+      } catch {
+        loadFailedRef.current = true;
+        showLoadError();
+      }
     })();
   }, []);
 
   // Persist to AsyncStorage whenever data changes
   useEffect(() => {
-    if (!state.loading) {
-      saveLocalLocations(state.locations);
-      saveLocalBeehives(state.beehives);
-      saveLocalRecordings(state.recordings);
+    // Never save before a successful load, or the in-memory state would overwrite stored data.
+    if (state.loading) {
+      // Deferred so it replaces, not precedes, a screen's own toast for the same tap.
+      if (loadFailedRef.current) setTimeout(showLoadError, 0);
+      return;
     }
+    saveLocalData(state.locations, state.beehives, state.recordings).catch(
+      (e: { code?: string }) => {
+        const full = e?.code === STORAGE_FULL;
+        Toast.show({
+          type: 'error',
+          text1: i18n.t(full ? 'common.storageFull' : 'common.saveError'),
+          visibilityTime: full ? 6000 : 3000,
+        });
+      },
+    );
   }, [state.locations, state.beehives, state.recordings, state.loading]);
 
   const addLocation = useCallback(async (name: string): Promise<Location> => {
@@ -215,6 +256,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteLocation = useCallback(async (id: string) => {
+    // Same predicate as DELETE_LOCATION, so only the recordings the reducer drops lose their files.
+    recordingsRef.current.filter((r) => r.locationId === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_LOCATION', id });
   }, []);
 
@@ -237,6 +280,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteBeehive = useCallback(async (id: string) => {
+    // Same predicate as DELETE_BEEHIVE in dataReducer.
+    recordingsRef.current.filter((r) => r.beehiveId === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_BEEHIVE', id });
   }, []);
 
@@ -278,13 +323,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteRecording = useCallback(async (id: string) => {
-    deletePhotos(id);
+    recordingsRef.current.filter((r) => r.id === id).forEach(deleteRecordingFiles);
     dispatch({ type: 'DELETE_RECORDING', id });
   }, []);
 
   const refreshData = useCallback(async () => {
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
+      // Retry the user id only after a failed first load, so this never races the mount effect.
+      if (loadFailedRef.current && !userIdRef.current) {
+        userIdRef.current = await getOrCreateLocalUserId();
+      }
       const data = await loadLocalData();
       dispatch({
         type: 'SET_ALL',
@@ -292,12 +341,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         beehives: data.beehives,
         recordings: data.recordings,
       });
+    } catch {
+      showLoadError();
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
   }, []);
 
   const exportAllData = useCallback(async () => {
+    if (state.loading) {
+      showLoadError();
+      return;
+    }
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
       await exportData(state.locations, state.beehives, state.recordings);
@@ -315,12 +370,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
-  }, [state.locations, state.beehives, state.recordings, t]);
+  }, [state.locations, state.beehives, state.recordings, state.loading, t]);
 
   const importAllData = useCallback(async () => {
+    if (state.loading) {
+      showLoadError();
+      return;
+    }
     dispatch({ type: 'SET_SYNCING', syncing: true });
     try {
-      const imported = await importData();
+      const imported = await importData(state.recordings);
       if (!imported) {
         dispatch({ type: 'SET_SYNCING', syncing: false });
         return;
@@ -371,7 +430,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     } finally {
       dispatch({ type: 'SET_SYNCING', syncing: false });
     }
-  }, [state.locations, state.beehives, state.recordings, t]);
+  }, [state.locations, state.beehives, state.recordings, state.loading, t]);
 
   const getBeehivesForLocation = useCallback(
     (locationId: string) => state.beehives.filter((b) => b.locationId === locationId),

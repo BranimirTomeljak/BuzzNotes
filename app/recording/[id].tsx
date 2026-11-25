@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   Animated,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -25,6 +26,7 @@ import {
   GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import * as ImagePicker from 'expo-image-picker';
+import Toast from 'react-native-toast-message';
 import { useData } from '../../src/contexts/DataContext';
 import { savePhoto, deletePhoto } from '../../src/services/photoStorage';
 import AudioPlayer from '../../src/components/AudioPlayer';
@@ -51,7 +53,7 @@ function ZoomableImage({
   pageIndex: number;
   activeIndex: number;
 }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [scaleAnim] = useState(() => new Animated.Value(1));
   const savedScaleRef = useRef(1);
   const pinchRef = useRef<PinchGestureHandler>(null);
   const doubleTapRef = useRef<TapGestureHandler>(null);
@@ -100,11 +102,7 @@ function ZoomableImage({
   );
 
   return (
-    <TapGestureHandler
-      ref={doubleTapRef}
-      numberOfTaps={2}
-      onHandlerStateChange={onDoubleTap}
-    >
+    <TapGestureHandler ref={doubleTapRef} numberOfTaps={2} onHandlerStateChange={onDoubleTap}>
       <Animated.View>
         <PinchGestureHandler
           ref={pinchRef}
@@ -113,10 +111,7 @@ function ZoomableImage({
         >
           <Animated.Image
             source={{ uri }}
-            style={[
-              { width, height: height * 0.8 },
-              { transform: [{ scale: scaleAnim }] },
-            ]}
+            style={[{ width, height: height * 0.8 }, { transform: [{ scale: scaleAnim }] }]}
             resizeMode="contain"
           />
         </PinchGestureHandler>
@@ -140,7 +135,9 @@ export default function RecordingDetail() {
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
   const photoListRef = useRef<FlatList>(null);
   const notesRef = useRef(notesText);
-  notesRef.current = notesText;
+  useLayoutEffect(() => {
+    notesRef.current = notesText;
+  }, [notesText]);
 
   const savedNotesRef = useRef(recording?.notes || '');
 
@@ -148,7 +145,8 @@ export default function RecordingDetail() {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const contentWidth = contentMaxWidth ? Math.min(screenWidth, contentMaxWidth) : screenWidth;
-  const photoSize = (contentWidth - spacing.xl * 2 - spacing.sm * (photoColumns - 1)) / photoColumns;
+  const photoSize =
+    (contentWidth - spacing.xl * 2 - spacing.sm * (photoColumns - 1)) / photoColumns;
 
   useEffect(() => {
     return () => {
@@ -199,30 +197,38 @@ export default function RecordingDetail() {
 
   const handleTakePhoto = useCallback(async () => {
     if (!recording) return;
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      const photos = recording.photos || [];
-      const newPath = savePhoto(result.assets[0].uri, id, photos.length);
-      updateRecording(id, { photos: [...photos, newPath] });
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const photos = recording.photos || [];
+        const newPath = savePhoto(result.assets[0].uri, id, photos.length);
+        updateRecording(id, { photos: [...photos, newPath] });
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, [recording, id, updateRecording]);
+  }, [recording, id, updateRecording, t]);
 
   const handlePickPhoto = useCallback(async () => {
     if (!recording) return;
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-    });
-    if (!result.canceled) {
-      const photos = recording.photos || [];
-      const newPaths = result.assets.map((a, i) => savePhoto(a.uri, id, photos.length + i));
-      updateRecording(id, { photos: [...photos, ...newPaths] });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        const photos = recording.photos || [];
+        const newPaths = result.assets.map((a, i) => savePhoto(a.uri, id, photos.length + i));
+        updateRecording(id, { photos: [...photos, ...newPaths] });
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, [recording, id, updateRecording]);
+  }, [recording, id, updateRecording, t]);
 
   const handleRemovePhoto = useCallback(
     (index: number) => {
@@ -266,10 +272,16 @@ export default function RecordingDetail() {
         }}
       />
 
-      <ScrollView contentContainerStyle={[
-        styles.content,
-        contentMaxWidth != null && { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const },
-      ]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          contentMaxWidth != null && {
+            maxWidth: contentMaxWidth,
+            alignSelf: 'center' as const,
+            width: '100%' as const,
+          },
+        ]}
+      >
         {/* Meta info */}
         <View style={styles.metaCard}>
           <View style={styles.metaRow}>
@@ -326,7 +338,9 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="document-text-outline" size={18} color={colors.text} />
-            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>{t('recordings.notes')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>
+              {t('recordings.notes')}
+            </Text>
           </View>
           <TextInput
             style={[styles.notesInput, { fontSize: 16 * scale, minHeight: isTablet ? 150 : 120 }]}
@@ -344,20 +358,26 @@ export default function RecordingDetail() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Ionicons name="images-outline" size={18} color={colors.text} />
-            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>{t('recordings.photos')}</Text>
+            <Text style={[styles.sectionTitle, { fontSize: 22 * scale }]}>
+              {t('recordings.photos')}
+            </Text>
           </View>
 
-          {/* Add photo buttons */}
-          <View style={styles.photoButtons}>
-            <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
-              <Ionicons name="camera-outline" size={20} color={colors.primary} />
-              <Text style={styles.photoButtonText}>{t('recordings.takePhoto')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
-              <Ionicons name="image-outline" size={20} color={colors.primary} />
-              <Text style={styles.photoButtonText}>{t('recordings.chooseFromGallery')}</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Add photo buttons; web picker URIs are blob: URLs that die on reload */}
+          {Platform.OS === 'web' ? (
+            <Text style={styles.webNote}>{t('common.webUnavailable')}</Text>
+          ) : (
+            <View style={styles.photoButtons}>
+              <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
+                <Ionicons name="camera-outline" size={20} color={colors.primary} />
+                <Text style={styles.photoButtonText}>{t('recordings.takePhoto')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.photoButton} onPress={handlePickPhoto}>
+                <Ionicons name="image-outline" size={20} color={colors.primary} />
+                <Text style={styles.photoButtonText}>{t('recordings.chooseFromGallery')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Photo grid */}
           {hasPhotos && (
@@ -365,7 +385,10 @@ export default function RecordingDetail() {
               {recording.photos!.map((uri, index) => (
                 <View key={uri + index} style={styles.photoContainer}>
                   <TouchableOpacity activeOpacity={0.8} onPress={() => setViewingPhotoIndex(index)}>
-                    <Image source={{ uri }} style={{ width: photoSize, height: photoSize, borderRadius: borderRadius.md }} />
+                    <Image
+                      source={{ uri }}
+                      style={{ width: photoSize, height: photoSize, borderRadius: borderRadius.md }}
+                    />
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.photoRemoveBtn}
@@ -383,50 +406,50 @@ export default function RecordingDetail() {
       {/* Fullscreen photo viewer with swipe */}
       <Modal visible={viewingPhotoIndex !== null} transparent animationType="fade">
         <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={styles.photoViewerOverlay}>
-          <TouchableOpacity
-            style={styles.photoViewerClose}
-            onPress={() => setViewingPhotoIndex(null)}
-          >
-            <Ionicons name="close" size={28} color={colors.white} />
-          </TouchableOpacity>
-          {viewingPhotoIndex !== null && recording.photos && (
-            <>
-              <FlatList
-                ref={photoListRef}
-                data={recording.photos}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                initialScrollIndex={viewingPhotoIndex}
-                getItemLayout={(_, index) => ({
-                  length: screenWidth,
-                  offset: screenWidth * index,
-                  index,
-                })}
-                onMomentumScrollEnd={(e) => {
-                  const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
-                  setViewingPhotoIndex(idx);
-                }}
-                keyExtractor={(item, i) => item + i}
-                renderItem={({ item, index }) => (
-                  <View style={[styles.photoViewerPage, { width: screenWidth }]}>
-                    <ZoomableImage
-                      uri={item}
-                      width={screenWidth}
-                      height={screenHeight}
-                      pageIndex={index}
-                      activeIndex={viewingPhotoIndex!}
-                    />
-                  </View>
-                )}
-              />
-              <Text style={styles.photoCounter}>
-                {viewingPhotoIndex + 1} / {recording.photos.length}
-              </Text>
-            </>
-          )}
-        </View>
+          <View style={styles.photoViewerOverlay}>
+            <TouchableOpacity
+              style={styles.photoViewerClose}
+              onPress={() => setViewingPhotoIndex(null)}
+            >
+              <Ionicons name="close" size={28} color={colors.white} />
+            </TouchableOpacity>
+            {viewingPhotoIndex !== null && recording.photos && (
+              <>
+                <FlatList
+                  ref={photoListRef}
+                  data={recording.photos}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  initialScrollIndex={viewingPhotoIndex}
+                  getItemLayout={(_, index) => ({
+                    length: screenWidth,
+                    offset: screenWidth * index,
+                    index,
+                  })}
+                  onMomentumScrollEnd={(e) => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+                    setViewingPhotoIndex(idx);
+                  }}
+                  keyExtractor={(item, i) => item + i}
+                  renderItem={({ item, index }) => (
+                    <View style={[styles.photoViewerPage, { width: screenWidth }]}>
+                      <ZoomableImage
+                        uri={item}
+                        width={screenWidth}
+                        height={screenHeight}
+                        pageIndex={index}
+                        activeIndex={viewingPhotoIndex!}
+                      />
+                    </View>
+                  )}
+                />
+                <Text style={styles.photoCounter}>
+                  {viewingPhotoIndex + 1} / {recording.photos.length}
+                </Text>
+              </>
+            )}
+          </View>
         </GestureHandlerRootView>
       </Modal>
     </View>
@@ -548,6 +571,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
+  },
+  webNote: {
+    ...typography.bodySmall,
   },
   photoGrid: {
     flexDirection: 'row',

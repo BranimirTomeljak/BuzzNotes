@@ -24,6 +24,6 @@ export async function saveRecordingLocally(
   ensureRecordingsDir();
   const destFile = new File(getRecordingsDir(), `${recordingId}.m4a`);
   const sourceFile = new File(sourceUri);
-  sourceFile.copy(destFile);
+  sourceFile.copySync(destFile);
   return destFile.uri;
 }

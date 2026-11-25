@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert, Platform, useWindowDimensions } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, shadows } from '../theme';
@@ -15,9 +22,7 @@ export default function FloatingActions() {
   const { width: screenWidth } = useWindowDimensions();
 
   const fabRight =
-    isTablet && contentMaxWidth
-      ? (screenWidth - contentMaxWidth) / 2 + spacing.lg
-      : spacing.lg;
+    isTablet && contentMaxWidth ? (screenWidth - contentMaxWidth) / 2 + spacing.lg : spacing.lg;
 
   const openRecord = () => {
     if (locations.length === 0) {

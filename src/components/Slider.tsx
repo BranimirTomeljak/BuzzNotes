@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import { View, StyleSheet, PanResponder, LayoutChangeEvent } from 'react-native';
 import { colors, borderRadius } from '../theme';
 
@@ -13,9 +13,11 @@ export default function Slider({ value, maximumValue, onValueChange, tintColor }
   const widthRef = useRef(0);
   const leftRef = useRef(0);
   const onValueChangeRef = useRef(onValueChange);
-  onValueChangeRef.current = onValueChange;
   const maximumValueRef = useRef(maximumValue);
-  maximumValueRef.current = maximumValue;
+  useLayoutEffect(() => {
+    onValueChangeRef.current = onValueChange;
+    maximumValueRef.current = maximumValue;
+  }, [onValueChange, maximumValue]);
 
   const getValueFromPageX = useCallback((pageX: number) => {
     const w = widthRef.current;
@@ -27,6 +29,7 @@ export default function Slider({ value, maximumValue, onValueChange, tintColor }
 
   const panResponder = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- the handlers run on touches, not in render
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,

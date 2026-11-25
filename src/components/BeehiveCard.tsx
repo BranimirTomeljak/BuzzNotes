@@ -33,7 +33,9 @@ export default function BeehiveCard({
         <Text style={[styles.name, { fontSize: 17 * scale }]} numberOfLines={1}>
           {beehive.name}
         </Text>
-        <Text style={[styles.count, { fontSize: 13 * scale }]}>{t('beehives.recordingCount', { count: recordingCount })}</Text>
+        <Text style={[styles.count, { fontSize: 13 * scale }]}>
+          {t('beehives.recordingCount', { count: recordingCount })}
+        </Text>
       </View>
       {onRecord && (
         <TouchableOpacity style={styles.recordButton} onPress={onRecord} activeOpacity={0.7}>

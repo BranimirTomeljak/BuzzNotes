@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useData } from '../contexts/DataContext';
@@ -9,7 +9,7 @@ import { spacing } from '../theme';
 import { useResponsive } from '../hooks/useResponsive';
 
 function FadeInView({ children }: { children: React.ReactNode }) {
-  const opacity = useRef(new Animated.Value(0)).current;
+  const [opacity] = useState(() => new Animated.Value(0));
   const hasAnimated = useRef(false);
 
   useEffect(() => {

@@ -36,11 +36,7 @@ export default function OnboardingScreen({ onDone }: OnboardingScreenProps) {
             <View key={feature.key} style={styles.featureRow}>
               <View style={styles.featureIcon}>
                 {feature.iconSet === 'material' ? (
-                  <MaterialCommunityIcons
-                    name={feature.icon}
-                    size={24}
-                    color={colors.primary}
-                  />
+                  <MaterialCommunityIcons name={feature.icon} size={24} color={colors.primary} />
                 ) : (
                   <Ionicons name={feature.icon} size={24} color={colors.primary} />
                 )}

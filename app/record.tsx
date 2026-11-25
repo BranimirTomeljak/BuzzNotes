@@ -7,11 +7,13 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAudioRecorder } from 'expo-audio';
+import type { AudioRecorder, RecordingStatus } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import Toast from 'react-native-toast-message';
 import * as ImagePicker from 'expo-image-picker';
@@ -31,6 +33,25 @@ import { formatDuration } from '../src/utils/formatting';
 import { hapticMedium, hapticSuccess } from '../src/utils/haptics';
 
 type Step = 'select' | 'record' | 'priority';
+
+const MIN_RECORDING_SECONDS = 1;
+const FINISH_WAIT_MS = 1000;
+
+// Resolves with the recorder's next finished status, or null if none comes within the wait.
+function nextFinish(recorder: AudioRecorder): Promise<RecordingStatus | null> {
+  let settle: (status: RecordingStatus | null) => void = () => {};
+  const done = new Promise<RecordingStatus | null>((resolve) => {
+    settle = resolve;
+  });
+  const subscription = recorder.addListener('recordingStatusUpdate', (status) => {
+    if (status.isFinished) settle(status);
+  });
+  const timer = setTimeout(() => settle(null), FINISH_WAIT_MS);
+  return done.finally(() => {
+    clearTimeout(timer);
+    subscription.remove();
+  });
+}
 
 export default function RecordScreen() {
   const router = useRouter();
@@ -59,6 +80,8 @@ export default function RecordScreen() {
   const [photoUris, setPhotoUris] = useState<string[]>([]);
 
   const durationInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startingRef = useRef(false);
+  const stoppingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -74,8 +97,12 @@ export default function RecordScreen() {
   const availableBeehives = selectedLocationId ? getBeehivesForLocation(selectedLocationId) : [];
 
   const handleStartRecording = useCallback(async () => {
+    // Ignore start taps until a start or stop fails; preparing the recorder twice throws.
+    if (startingRef.current) return;
+    startingRef.current = true;
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
+      startingRef.current = false;
       Toast.show({ type: 'error', text1: t('recordings.micPermission'), visibilityTime: 2000 });
       return;
     }
@@ -85,58 +112,84 @@ export default function RecordScreen() {
       await recorder.prepareToRecordAsync();
       recorder.record();
       hapticMedium();
+      stoppingRef.current = false;
       setIsRecording(true);
       setRecordingDuration(0);
       durationInterval.current = setInterval(() => {
         setRecordingDuration((d) => d + 1);
       }, 1000);
     } catch {
+      // A record() that throws leaves the recorder prepared, and only a stop resets it for a retry.
+      try {
+        await recorder.stop();
+      } catch {
+        // Nothing was prepared
+      }
+      startingRef.current = false;
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
   }, [recorder, t]);
 
   const handleStopRecording = useCallback(async () => {
+    // A second tap before the re-render would read the reset time and fail a good recording.
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
     if (durationInterval.current) {
       clearInterval(durationInterval.current);
       durationInterval.current = null;
     }
 
     try {
+      // The recorder resets currentTime to 0 when it stops, so read the length first.
+      const seconds = recorder.currentTime;
+      const finished = nextFinish(recorder);
       await recorder.stop();
+      // Android has no audio this early, and stop() no longer rejects for it, so fail like it used to.
+      if (seconds < MIN_RECORDING_SECONDS) throw new Error('Recording too short');
+      // A later failure also resolves stop(); the finished event, sometimes after it, reports it.
+      if ((await finished)?.hasError) throw new Error('Recording failed');
       hapticMedium();
       await configurePlaybackMode();
       const uri = recorder.uri;
-      const duration = Math.round(recorder.currentTime);
       setIsRecording(false);
       setRecordingUri(uri);
-      setRecordedDuration(duration);
+      setRecordedDuration(Math.round(seconds));
       setStep('priority');
     } catch {
+      startingRef.current = false;
       setIsRecording(false);
       Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
   }, [recorder, t]);
 
   const handleTakePhoto = useCallback(async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setPhotoUris((prev) => [...prev, result.assets[0].uri]);
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setPhotoUris((prev) => [...prev, result.assets[0].uri]);
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, []);
+  }, [t]);
 
   const handlePickPhoto = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-      allowsMultipleSelection: true,
-    });
-    if (!result.canceled) {
-      setPhotoUris((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        allowsMultipleSelection: true,
+      });
+      if (!result.canceled) {
+        setPhotoUris((prev) => [...prev, ...result.assets.map((a) => a.uri)]);
+      }
+    } catch {
+      Toast.show({ type: 'error', text1: t('common.error'), visibilityTime: 1500 });
     }
-  }, []);
+  }, [t]);
 
   const handleRemovePhoto = useCallback((index: number) => {
     setPhotoUris((prev) => prev.filter((_, i) => i !== index));
@@ -193,6 +246,22 @@ export default function RecordScreen() {
       setStep('record');
     }
   }, [selectedBeehiveId, selectedLocationId]);
+
+  // Web recorder URIs are blob: URLs that die on reload, so the web preview cannot record.
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+            <Ionicons name="close" size={28} color={colors.white} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{t('recordings.add')}</Text>
+          <View style={styles.closeButton} />
+        </View>
+        <Text style={styles.webNote}>{t('common.webUnavailable')}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -403,6 +472,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: colors.white,
+  },
+  webNote: {
+    ...typography.bodySmall,
+    padding: spacing.xl,
+    textAlign: 'center',
   },
   content: {
     flexGrow: 1,

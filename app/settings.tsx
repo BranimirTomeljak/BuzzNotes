@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,8 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { syncing, exportAllData, importAllData } = useData();
+  // expo-file-system is a stub on web, so export and import would always fail there.
+  const isWeb = Platform.OS === 'web';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -29,10 +31,11 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          {isWeb && <Text style={styles.webNote}>{t('common.webUnavailable')}</Text>}
           <TouchableOpacity
             onPress={exportAllData}
-            disabled={syncing}
-            style={styles.actionButton}
+            disabled={syncing || isWeb}
+            style={[styles.actionButton, isWeb && styles.disabledButton]}
             activeOpacity={0.7}
           >
             <Ionicons
@@ -48,8 +51,8 @@ export default function SettingsScreen() {
 
           <TouchableOpacity
             onPress={importAllData}
-            disabled={syncing}
-            style={styles.importButton}
+            disabled={syncing || isWeb}
+            style={[styles.importButton, isWeb && styles.disabledButton]}
             activeOpacity={0.7}
           >
             <Ionicons
@@ -123,5 +126,12 @@ const styles = StyleSheet.create({
   importButtonText: {
     ...typography.button,
     color: colors.textSecondary,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  webNote: {
+    ...typography.bodySmall,
+    textAlign: 'center',
   },
 });

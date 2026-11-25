@@ -17,6 +17,13 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.keystore
+
+# Play and EAS credentials
+*service-account*.json
+pc-api-*.json
+credentials.json
+credentials/
 
 # Metro
 .metro-health-check*

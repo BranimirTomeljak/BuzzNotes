@@ -141,7 +141,13 @@ export default function BeehiveDetail() {
         }}
       />
 
-      <View style={contentMaxWidth ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const } : undefined}>
+      <View
+        style={
+          contentMaxWidth
+            ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
+            : undefined
+        }
+      >
         <EditableNameRow
           name={beehive.name}
           icon="archive-outline"

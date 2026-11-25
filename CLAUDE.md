@@ -1,20 +1,22 @@
 # BuzzNotes - Beekeeper Voice Notes App
 
 ## Project Overview
-React Native (Expo) app for beekeepers to manage voice recordings organized by location and beehive. Targets Android + Web.
+React Native (Expo) app for beekeepers to manage voice recordings organized by location and beehive. Targets Android; the web build is a limited UI preview (no recording, photos or export/import).
+
+Owned by KeyZero d.o.o. (Croatia); Branimir Tomeljak is its sole developer.
 
 **Important**: Keep this CLAUDE.md updated after every noteworthy change (new features, architectural decisions, convention changes, pitfalls discovered). This file is the source of truth for the project.
 
 ## Tech Stack
-- **Framework**: Expo SDK 54 + TypeScript
-- **Navigation**: Expo Router v6 (file-based routing in `app/` directory)
+- **Framework**: Expo SDK 58 (React Native 0.88, React 19.3) + TypeScript 6
+- **Navigation**: Expo Router 58 (file-based routing in `app/` directory)
 - **Backend**: Offline-first (AsyncStorage). Firebase code kept for future cloud sync.
 - **Audio**: expo-audio (migrated from deprecated expo-av)
 - **Photos**: expo-image-picker (camera + gallery), file-based storage in `photos/` directory, pinch-to-zoom via react-native-gesture-handler
 - **Haptics**: expo-haptics (no-op on web)
 - **Icons**: @expo/vector-icons (Ionicons + MaterialCommunityIcons) — no emojis in UI
 - **State**: React Context + useReducer
-- **i18n**: i18next (Croatian default, English)
+- **i18n**: i18next (Croatian default, English), with the `intl-pluralrules` polyfill for Hermes
 - **Export/Import**: expo-sharing + expo-file-system
 
 ## Commands
@@ -32,7 +34,9 @@ React Native (Expo) app for beekeepers to manage voice recordings organized by l
 
 `eas.json` has two profiles:
 - **`preview`** — builds an APK (directly installable on Android)
-- **`production`** — builds AAB (for Play Store upload)
+- **`production`** — builds AAB (for Play Store upload) and increments the remote `versionCode`
+
+Both profiles build on EAS's default image for the Expo SDK. Do not set `"image": "latest"`, which moves to a new toolchain without notice.
 
 Login first: `npx eas-cli login`
 
@@ -44,6 +48,8 @@ This runs in the cloud on EAS servers (free tier: 30 builds/month). It will:
 3. Return a download link for the `.apk`
 
 Expo account required — sign up free at https://expo.dev/signup
+
+Submit a production build: `npx eas-cli submit --platform android --profile production`. It uploads to Play's internal track as a draft. The Play service-account key is stored on EAS, so `eas.json` has no `serviceAccountKeyPath`. `.gitignore` covers the usual key and credential file names (`*service-account*.json`, `pc-api-*.json`, `credentials.json`, `credentials/`, `*.keystore`), but keep a downloaded key outside the repository anyway. Per the EAS docs, once the app exists in Play Console the first submit creates its first internal release; if Play rejects it because the app has never had an upload, upload that AAB by hand in Play Console.
 
 ### GitHub Auto-Build
 
@@ -62,27 +68,29 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 `.github/workflows/ci.yml` runs on every push to `master` and on PRs:
 1. TypeScript type check (`npx tsc --noEmit`)
 2. ESLint (`npm run lint`)
-3. Jest tests (`npm test`)
+3. Prettier check (`npm run format:check`)
+4. Jest tests (`npm test`)
 
 ### Testing
 
 - **Framework**: jest-expo preset
-- **Test files**: `src/__tests__/*.test.ts`
+- **Test files**: `src/__tests__/*.test.ts(x)`; tests that contain JSX must be `.tsx`
 - **Setup**: `jest.setup.js` mocks AsyncStorage
-- **Coverage**: formatting utils, sorting utils, data reducer
+- **Shared fake**: `src/testUtils/fakeFileSystem.ts` is an in-memory, Android-like `File`/`Directory`/`Paths` with a `fakeFs` helper (`reset`, `seed`, `read`, `list`). It lives outside `__tests__` because Jest runs every file in there. Its async `copy` and `write` settle on a later tick, as the native calls do, so a missing `await` fails a test. Writes honour `append` and create a missing file, as Android does.
+- **Coverage**: formatting utils, sorting utils, theme, responsive hook, data reducer, export/import, photo and recording file storage, plural forms, the location card, the record screen's start and stop handling, release config, and `DataProvider` (provider tests render it with react-test-renderer and read AsyncStorage back)
 - `dataReducer` is exported from `DataContext.tsx` for direct unit testing
 
 ### Code Quality
 
-- **ESLint**: `eslint-config-expo` + `eslint-config-prettier` (`.eslintrc.js`)
+- **ESLint**: ESLint 9 with `eslint-config-expo` + `eslint-config-prettier` in the flat `eslint.config.js`; ESLint 10 waits on the `eslint-plugin-react` and `eslint-plugin-import` versions that eslint-config-expo 58 depends on. The config gives `jest.setup.js` the `jest` global and turns off `import/no-named-as-default-member` for `src/i18n/index.ts`, where i18next's documented `i18n.use()` trips it. The React Compiler rules `react-hooks/refs` and `react-hooks/globals` (new in eslint-config-expo 58) are on; the only suppression is the slider's `PanResponder.create`, whose handlers read layout refs on touches
 - **Prettier**: single quotes, trailing commas, 100 char width (`.prettierrc`)
 - Only `firebaseConfig.ts` has lint warnings (unused imports kept intentionally for future use)
 
 ### Versioning
 
-- `app.json` `version` — semantic version string (e.g. `"1.0.0"`)
-- `app.json` `android.versionCode` — integer, increment on each release
-- `package.json` `version` — keep in sync with `app.json`
+- `app.json` `version` — semantic version string (e.g. `"1.0.0"`), bumped by hand for each release
+- `android.versionCode` — managed remotely by EAS (`cli.appVersionSource: "remote"`), and every `production` build increments it (`autoIncrement`). The `versionCode: 1` in `app.json` only seeds the remote value when EAS has none yet. If Play already has a higher versionCode, set the remote value first with `npx eas-cli build:version:set`
+- `package.json` `version` — keep in sync with `app.json`, also by hand
 
 ## Project Structure
 - `app/` - Expo Router screens (tabs, location/[id], beehive/[id], recording/[id], record, settings)
@@ -95,11 +103,18 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - `src/hooks/` - Custom hooks (useDetailTabBar, useResponsive)
 - `src/utils/` - Utility functions (sorting, formatting, confirmDelete)
 - `src/__tests__/` - Jest unit tests
+- `src/testUtils/` - Jest-only helpers (`fakeFileSystem`); never imported by app code
 - `src/screens/` - Screens not currently routed (auth.tsx, OnboardingScreen.tsx)
+- `README.md` - Developer overview: platforms, stack, setup, builds, architecture, backup, limitations; keep its quality-check list in sync with CI
+- `LICENSE` - Proprietary license; the copyright holder is KeyZero d.o.o.
+- `PRIVACY.md` - Privacy policy for the Android app; placeholders until it is published
 
 ## Conventions
 - Voice note dates displayed as `dd.mm.yyyy HH:mm` (24h, using `createdAt` timestamp)
 - Croatian is the default language
+- Croatian copy uses informal "ti"; the welcome keeps the gender-neutral plural greeting "Dobro došli", two words as the IHJJ pravopis writes greetings ("dobrodošli" is the adjective)
+- A number shown next to a noun uses a plural key (`beehives.recordingCount`, `common.beehiveLabel`, `common.recordingLabel`), never a screen title
+- `PRIVACY.md` (Android app only; placeholders `<CONTACT_EMAIL>` and `<EFFECTIVE_DATE>`) and the Play Data safety form must change in the same change as anything that alters data handling: permissions, stored data, cache or export contents, backups, network use, analytics or crash reporting
 - Colors follow Organic Soft honey/amber theme (primary: #B8860B, bg: #FAF7F0, surface: #F0EBE0, text: #3D3521)
 - Large touch targets and font sizes for accessibility
 - Priority system: HIGH (red #EF5350), MEDIUM (yellow #F9A825), LOW (blue #5C9CE6)
@@ -143,9 +158,9 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 - Priority badge (tap to cycle) + solved toggle chip
 - Audio player with priority tint (or muted if solved)
 - Notes section with inline edit (pencil icon toggles edit mode)
-- Photo grid (2 columns) with camera/gallery add buttons and remove buttons
+- Photo grid (2 columns) with camera/gallery add buttons and remove buttons; camera and gallery errors (for example a denied permission) show `common.error` here and on the record screen
 - Tapping a photo opens fullscreen viewer with horizontal swipe (paginated FlatList), pinch-to-zoom (1x–5x), double-tap to toggle 2x zoom, and "1 / N" counter
-- Deleting a recording also deletes its photos from disk (`deletePhotos`)
+- Deleting a recording deletes its audio and photos by their stored paths; deletes are limited to the app's media folders (`deleteRecordingFiles`, guarded by `isAppMediaPath`)
 
 ### Audio Player
 - Play/pause button (44x44 circle), slider with draggable thumb (16px), time display
@@ -170,7 +185,11 @@ After that, every push to `master` triggers an APK build in the cloud. Download 
 Recording list scenes, editable name rows, tab bar config, and delete confirmations are deduplicated into shared pieces:
 
 - **`RecordingListScene`** (`src/components/`) — Sorted FlatList of RecordingCards with solved divider. Used by all Recent/Priority scenes across tabs, location detail, and beehive detail. Props: `recordings`, `sortFn`, `emptyIcon`, optional `getBeehiveName`/`getLocationName` resolvers, optional `onPressRecording` for navigation to detail.
-- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deletePhotos`, `ensurePhotosDir`. Photos stored as `photos/{recordingId}_{index}.jpg`.
+- **`photoStorage`** (`src/services/`) — File-based photo storage: `savePhoto`, `deletePhoto`, `deleteRecordingFiles`, `isAppMediaPath`, `ensurePhotosDir`. `isAppMediaPath` accepts only a name matching `^[\w-]+\.(m4a|jpg)$` directly inside `documents/recordings/` or `documents/photos/`, and `deletePhoto` deletes nothing else. Media file names in use (all must keep working):
+  - record flow: `recordings/rec_<ts>.m4a` and `photos/rec_<ts>_<ts2>_<i>.jpg` (the record keeps the temporary `rec_<ts>` id in its file names but gets a UUID)
+  - detail screen: `photos/<id>_<ts>_<i>.jpg`
+  - import: `recordings/<id>.m4a` and `photos/<id>_<i>.jpg`
+  - older files: `photos/rec_<ts>_<i>.jpg` and `photos/<id>_<n>.jpg`
 - **`EditableNameRow`** (`src/components/`) — Editable name with icon + delete button. Used by location and beehive detail screens. Props: `name`, `icon` (`'location-outline'` | `'archive-outline'`), `onSave`, `onDelete`.
 - **`useDetailTabBar`** (`src/hooks/`) — Shared pill-style tab bar for detail screens. Returns `{ renderTabBar }`. No arguments needed.
 - **`confirmDelete`** (`src/utils/`) — Platform-aware delete confirmation (web `confirm()` / native `Alert.alert`). Used by RecordingCard, location detail, beehive detail.
@@ -184,10 +203,13 @@ The app runs fully offline with no Firebase dependency at runtime. A local UUID 
 
 ### Export/Import
 - Export creates a `.buzznotes.json` file with all data + audio files + photos encoded as base64
+- Export reads media one file at a time and writes the file one recording at a time (`writeSync` with `append: true`), so memory holds one recording's media, not the whole backup; the text is the same as one `JSON.stringify` of the payload. Since SDK 58 the native `base64()` reads run in parallel, each holds about four times its file's size on the Java heap, and a read that fails (out of memory included) leaves that file out of the backup without a warning. Import still reads the whole file at once, so a phone can export a backup that is too large for it to import
 - Uses `expo-sharing` to share via email, Drive, Bluetooth, etc.
-- Import uses `File.pickFileAsync()` from expo-file-system to select a file
+- Import uses `File.pickFileAsync()` from expo-file-system to select a file. A cancelled pick rejects with code `ERR_PICKER_CANCELLED` (it never resolves to null); `importData` turns that into `null`, so no error toast appears. It keeps the deprecated `(initialUri, mimeType)` form on purpose: the options form reports every picker error as a cancel
 - Import restores audio to `recordings/` dir and photos to `photos/` dir, updating `localPath` and `photos` paths
 - Merge strategy: imported items with same ID update existing (by updatedAt); new items are added
+- Import rejects the whole file if any recording id is not a plain name (`^[\w-]+$`), because ids become media file names; export embeds only files that pass `isAppMediaPath`
+- Import writes no media for a record whose local copy is newer (`importData(existing)` skips it when `local.updatedAt > incoming.updatedAt`, the exact complement of the merge's `>=`), so an older backup never overwrites newer photos or audio
 
 ### Files Kept for Future Firebase Integration
 - `firebaseConfig.ts` - Firebase config placeholder (initializes Firebase at import time — do NOT import at top level)
@@ -239,13 +261,42 @@ The `Recording` type includes optional `notes?: string` and `photos?: string[]` 
 
 ## Known Pitfalls
 - **uuid package**: `crypto.getRandomValues()` not supported on React Native/Hermes. Use `expo-crypto` `randomUUID()` instead.
+- **Hermes has no Intl.PluralRules**: Hermes on Android lacks it (still true of RN 0.88's Hermes V1), and i18next then knows only one/other, so Croatian would show "2 snimki" instead of "2 snimke". `src/i18n/index.ts` imports the `intl-pluralrules` polyfill first. Plural keys use the suffixes `_one`, `_few` and `_other`; i18next ignores `_plural` since v24.
 - **Firebase lazy loading**: `firebaseConfig.ts` initializes Firebase at import time. Any file that imports it will trigger initialization. Use dynamic `import()` for firebase in runtime code, or keep static imports only in files that aren't auto-loaded.
 - **expo-av deprecated in SDK 54**: Use `expo-audio` package instead. Hooks: `useAudioPlayer`, `useAudioPlayerStatus`, `useAudioRecorder`.
-- **Slider drag**: Must use `pageX` (absolute coordinates) with `measureInWindow`, not `locationX` (relative to element). Store callbacks in refs to avoid stale PanResponder closures.
+- **Refs and render**: `react-hooks/refs` rejects reading or writing a ref during render. Write latest-value refs in `useLayoutEffect`, and create an `Animated.Value` with `useState(() => new Animated.Value(x))`, not `useRef(...).current`.
+- **Slider drag**: Must use `pageX` (absolute coordinates) with `measureInWindow`, not `locationX` (relative to element). Store callbacks in refs to avoid stale PanResponder closures, and write those refs in a layout effect, never during render.
 - **Expo Router auto-evaluation**: All files in `app/` are discovered and evaluated as routes, even if not rendered. Keep files with heavy imports (Firebase) out of `app/` until needed.
 - **Import localPath**: When importing recordings, `localPath` must be updated to the new device's file URI after writing the audio file. The original path from the exporting device is invalid.
 - **Recorder cleanup**: Always stop the recorder in useEffect cleanup to prevent microphone staying active after screen unmount. Wrap in try-catch — the native recorder object may already be released (e.g. after `router.replace` triggers unmount post-stop).
 - **Router dismiss+push race**: Use `router.replace()` instead of `router.dismiss()` followed by `router.push()` — they race on Android.
+- **Never persist after a failed load**: `loadLocalData` rejects on a read or parse error. `DataProvider` then stays in `loading`, shows `common.loadError`, and blocks saves, import and export until a pull-to-refresh loads successfully. That refresh also retries the user id if the first read failed. Saving the empty state would overwrite the user's data.
+- **AsyncStorage limits on Android**: the database is capped at 6 MiB, and a single value larger than about 2 MiB cannot be read back (CursorWindow limit). `saveLocalData` refuses to write a recordings value over 1,900,000 UTF-8 bytes (error code `STORAGE_FULL`), and `DataProvider` shows `common.storageFull` instead of the generic `common.saveError`. Nothing saves until recordings are deleted.
+- **Stored data version**: there is no `@buzznotes/schemaVersion` key yet; once one exists, a missing key means v1.
+- **One toast at a time**: react-native-toast-message replaces the visible toast. On Fabric a tap's dispatch commits and runs effects before the handler's `await` resumes, so a toast shown from an effect is replaced by the handler's own toast. Defer such toasts with `setTimeout(..., 0)`, as the failed-load warning in the persist effect does.
+- **File copy and write**: since expo-file-system 58 `File.copy` and `File.write` return Promises, so the app calls `copySync` and `writeSync`, which throw like the old calls. `copySync` throws if the target exists, while `writeSync` creates or truncates. New media names must be unique, which is why `savePhoto` adds `Date.now()`.
+- **Media deletes come first**: deleting a recording, beehive or location removes the files of exactly the recordings the reducer drops (`deleteBeehive` and `deleteLocation` use the same predicates as `DELETE_BEEHIVE` and `DELETE_LOCATION`), before the records go. If that save then fails (for example `STORAGE_FULL`), the record comes back after a restart without its files; this is accepted. Orphaned files that older versions left behind are never swept.
+- **Web media**: on web the recorder and image picker return `blob:` URLs that stop working after a reload, and expo-file-system is a stub, so export and import cannot work. The web preview therefore hides recording and the photo buttons and disables Export and Import, showing `common.webUnavailable` instead. Keep new media features behind the same `Platform.OS === 'web'` gate.
+- **Toast text length**: default toasts show one line, about 40 characters. Error toasts wrap without a line limit through `toastConfig` in `app/_layout.tsx` (the box grows, so large system font sizes still show the whole message), so keep success and info texts short.
+- **Denormalised `Recording.locationId`**: it copies its beehive's location. `UPDATE_BEEHIVE` moves it together with the beehive, without bumping the recordings' `updatedAt`, and `SET_ALL` realigns it on load, refresh and import.
+- **Whole-dataset writes**: every change rewrites all three data keys with one `AsyncStorage.multiSet` in `saveLocalData`, which is a single SQLite transaction on Android. This is intentional at this data size.
+- **Blocked Android permissions**: `app.json` `android.blockedPermissions` removes `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` (the expo-audio config plugin adds them with `AudioControlsService`, because `enableBackgroundPlayback` defaults to true, for a service the app never starts), `WAKE_LOCK` (media3 1.9, which expo-audio 58 uses, declares it, and the app never sets a wake mode) and the template's `SYSTEM_ALERT_WINDOW`. Never block storage (the image picker needs `WRITE_EXTERNAL_STORAGE` below API 29, minSdk is 24, and since SDK 58 both storage permissions are declared only up to API 32), `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`, `CAMERA`, `VIBRATE` or `INTERNET`. Library permissions are merged by Gradle at build time, so `npx expo config --type introspect` shows a blocked one only as an entry with `tools:node="remove"`; `releaseConfig.test.ts` checks the list. Lock-screen controls (`setActiveForLockScreen`) and background recording (`setAudioModeAsync({ allowsBackgroundRecording: true })`) start expo-audio's foreground services, so unblock the permissions before using either; background recording also needs `FOREGROUND_SERVICE_MICROPHONE`, which the expo-audio plugin adds with `enableBackgroundRecording`. Otherwise the services cannot enter the foreground and the app crashes on Android 9 and later. The expo-image-picker plugin options `microphonePermission: false` and `cameraPermission: false` block `RECORD_AUDIO` and `CAMERA`; never set them.
+- **SDK 58 dependencies**: expo 58 no longer depends on `@expo/vector-icons`, so it is a direct dependency with its peer `expo-font`. expo-router 58's drawer makes `react-native-reanimated` a required peer, so it and `react-native-worklets` are autolinked into the APK; both are pinned to the SDK 58 versions (4.7.1 and 0.13.0), because an unpinned install picks a reanimated that does not build with RN 0.88. `jest` is a direct devDependency because jest-expo 58 lists it as a peer.
+- **expo-modules-core must be hoisted**: jest-expo 58's setup requires it from the top of `node_modules`; if npm nests it under `expo`, every suite fails with "Cannot find module 'expo-modules-core'". Fix the lockfile with `npm install expo-modules-core@<the version expo depends on>` followed by `npm uninstall expo-modules-core`.
+- **RN 0.88 and TypeScript 6**: `StyleSheet.absoluteFillObject` is gone, so spread `StyleSheet.absoluteFill`. TypeScript 6 rejects `baseUrl` and defaults `types` to `[]`, so `tsconfig.json` lists `"types": ["jest"]`.
+- **R8 stays off**: SDK 58's Android template turns on R8 (`android.enableMinifyInReleaseBuilds=true`), and `app.json` turns it off again through `expo-build-properties`, as SDK 54 built (`releaseConfig.test.ts` checks it). R8 renames classes, and expo-modules-core derives codes such as `ERR_PICKER_CANCELLED` from the exception's class name, so Import's cancel check would break. Turn R8 on only as its own change, tested on a release APK.
+- **Light mode on Android**: `app.json` `userInterfaceStyle: "light"` works on Android only through `expo-system-ui`, which turns AppCompat's night mode off when the activity starts. Without it, native dialogs such as `Alert.alert` follow the system dark mode while the screens stay light. `releaseConfig.test.ts` checks the dependency.
+- **Node version**: Expo SDK 58, React Native 0.88 and Metro need Node ^22.13, ^24.3 or 26+. CI runs Node 22, the line EAS's SDK 58 build image uses (22.23.2).
+- **expo-audio 58 recorder**: `stop()` resolves even when Android's `MediaRecorder.stop()` fails (a stop within about half a second of the start), so `handleStopRecording` treats a recording under 1 second as failed and shows `common.error`, as SDK 54 did. `recorder.currentTime` is 0 after `stop()`, so it reads the duration before stopping. A second stop tap before the re-render would read that 0, so `stoppingRef` ignores stop taps from the first one until the next recording starts. Likewise `startingRef` ignores start taps from the first one until a start or stop fails, because preparing the recorder twice throws `AudioRecorderAlreadyPreparedException`. A `record()` that throws (for example while another app holds the microphone on older Android) leaves the recorder prepared, so the start's catch calls `stop()` to reset it before the next tap. A stop that fails after the first second (for example when the media server dies) also resolves, so `handleStopRecording` subscribes to `recordingStatusUpdate` before calling `stop()`, waits up to 1 second for the finished event (it can reach JS after `stop()` resolves), and treats `hasError` like a too-short recording. On Android `stop()` (typed `Promise<void>`) also resolves with a status that has no `url` after a failure; the app does not rely on that undocumented value.
+- **Jest: expo-file-system**: jest-expo 58 gives `File`, `Directory` and `Paths` an in-memory mock of its own (`file:///mock/document/`, directory URIs without the trailing slash), so a test that forgets our fake still runs, against the wrong paths. Every test file that touches files declares `jest.mock('expo-file-system', () => require('../testUtils/fakeFileSystem'))`.
+- **Jest: expo-crypto**: the auto-mock's `randomUUID` returns `undefined`; mock it with a counter.
+- **Jest: Platform**: `Platform.OS` is `'ios'`; for web paths use `jest.replaceProperty(Platform, 'OS', 'web')`. To exercise the real web stub, also mock `expo-file-system` with `jest.requireActual('expo-file-system')` and `../../node_modules/expo-file-system/build/ExpoFileSystem` with `jest.requireActual('../../node_modules/expo-file-system/build/ExpoFileSystem.web')`; the package's exports map hides its `src/` and `build/` paths from bare imports.
+- **Jest: react-test-renderer**: a direct devDependency, since jest-expo 58 no longer brings it, pinned to the exact `react` version (19.3.0) because it requires an exact match. It ships no types of its own. `@types/react-test-renderer` comes only as a dependency of react-native-gesture-handler 3, so a plain `import ... from 'react-test-renderer'` type-checks today but fails CI's strict `tsc` with TS7016 if that dependency goes. Tests therefore use `const { create } = require('react-test-renderer') as { create: (el: React.ReactElement) => { unmount: () => void } };` and take `act` from `'react'`.
+- **Jest: provider tests**: also mock `react-native-toast-message` (`{ __esModule: true, default: { show: jest.fn() } }`) and `react-i18next` (`t` returns the key). In `beforeEach`, call `fakeFs.reset()` and `AsyncStorage.clear()`, then seed AsyncStorage. Read the context through a `Probe` that passes `useData()` to an `onData` prop. Render inside `await act(async () => ...)`, let effects settle with a zero timeout inside `act`, and unmount in `afterEach`.
+- **Jest: i18n**: every test that imports `DataContext` mocks `../i18n` with `{ __esModule: true, default: { t: (key: string) => key } }`. The real module calls `i18n.use(initReactI18next)` at import time, which throws under the `react-i18next` mock.
+- **Jest: Intl.PluralRules**: Node has a native one, so a plural test passes even where the phone fails. `i18n.test.ts` deletes it before requiring `../i18n`, and restores it afterwards.
+- **Jest: vector icons**: `@expo/vector-icons` icons render glyph `Text` nodes and load fonts asynchronously, which logs `act` warnings, so component tests mock the icon sets to render `null` (see `locationCard.test.tsx`).
+- **Jest: mocks and lint**: put `jest.mock` calls after the imports (babel hoists them, and this avoids the `import/first` warning), and leave no unused imports, or lint shows a third warning.
 
 ## UX Polish
 
